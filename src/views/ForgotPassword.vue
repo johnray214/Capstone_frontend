@@ -2,7 +2,7 @@
   <div class="forgot-password-page">
     <div class="forgot-password-container">
       <div class="logo-container">
-        <img src="@/assets/posu_logo.png" alt="POSU Logo" class="logo" />
+        <img src="@/assets/posu_logo.jpg" alt="POSU Logo" class="logo" />
         <h1>POSU Traffic Violation System</h1>
       </div>
       

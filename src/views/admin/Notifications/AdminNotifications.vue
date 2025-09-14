@@ -1,28 +1,64 @@
 <template>
   <SidebarLayout page-title="Notifications">
-    <div class="notifications-container">
+    <div class="admin-notifications">
       <!-- Header Section -->
       <div class="page-header">
         <div class="header-content">
-          <div class="header-text">
-            <h1 class="page-title">Notifications</h1>
-            <p class="page-subtitle">Manage system notifications and user communications</p>
-          </div>
-          <div class="header-actions">
-            <router-link to="/admin/notifications/send" class="btn btn-primary">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3h18l-9 15L3 3z"/>
-              </svg>
-              Send Notification
-            </router-link>
-          </div>
+          <h2>Notifications Dashboard</h2>
+          <p>Manage and monitor all system notifications - sent and received</p>
+        </div>
+        <div class="header-actions">
+          <router-link to="/admin/notifications/send" class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h18l-9 15L3 3z"/>
+            </svg>
+            Send Notification
+          </router-link>
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="stats-grid">
+      <!-- Notification Stats -->
+      <div class="notification-stats">
         <div class="stat-card">
-          <div class="stat-icon info">
+          <div class="stat-icon sent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h18l-9 15L3 3z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.sent }}</div>
+            <div class="stat-label">Sent by You</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon received">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.received }}</div>
+            <div class="stat-label">Received</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.total }}</div>
+            <div class="stat-label">Total System</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon unread">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
@@ -30,256 +66,398 @@
             </svg>
           </div>
           <div class="stat-content">
-            <div class="stat-number">{{ stats.total }}</div>
-            <div class="stat-label">Total Notifications</div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon success">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22,4 12,14.01 9,11.01"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.sent }}</div>
-            <div class="stat-label">Successfully Sent</div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon warning">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.pending }}</div>
-            <div class="stat-label">Pending</div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon error">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.failed }}</div>
-            <div class="stat-label">Failed</div>
+            <div class="stat-number">{{ stats.unread }}</div>
+            <div class="stat-label">Unread</div>
           </div>
         </div>
       </div>
 
-      <!-- Filters and Search -->
+      <!-- View Toggle -->
+      <div class="view-toggle-section">
+        <div class="view-toggle">
+          <button 
+            @click="activeView = 'all'" 
+            :class="['toggle-btn', { active: activeView === 'all' }]"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            All Notifications ({{ filteredNotifications.length }})
+          </button>
+          <button 
+            @click="activeView = 'sent'" 
+            :class="['toggle-btn', { active: activeView === 'sent' }]"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h18l-9 15L3 3z"/>
+            </svg>
+            Sent by Me ({{ sentNotifications.length }})
+          </button>
+          <button 
+            @click="activeView = 'received'" 
+            :class="['toggle-btn', { active: activeView === 'received' }]"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            Received ({{ receivedNotifications.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
       <div class="filters-section">
-        <div class="filters-card">
-          <div class="filters-row">
-            <div class="filter-group">
-              <label class="filter-label">Filter by Type</label>
-              <select v-model="filters.type" @change="applyFilters" class="filter-select">
-                <option value="">All Types</option>
-                <option value="system">System</option>
-                <option value="manual">Manual</option>
-                <option value="payment">Payment Reminder</option>
-                <option value="warning">Warning</option>
-                <option value="info">Information</option>
-              </select>
-            </div>
-            
-            <div class="filter-group">
-              <label class="filter-label">Target Audience</label>
-              <select v-model="filters.target" @change="applyFilters" class="filter-select">
-                <option value="">All Users</option>
-                <option value="Admin">Administrators</option>
-                <option value="Enforcer">Enforcers</option>
-                <option value="Violator">Violators</option>
-              </select>
-            </div>
-            
-            <div class="filter-group">
-              <label class="filter-label">Status</label>
-              <select v-model="filters.status" @change="applyFilters" class="filter-select">
-                <option value="">All Status</option>
-                <option value="sent">Sent</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
-            
-            <div class="filter-group">
-              <label class="filter-label">Search</label>
-              <div class="search-input-wrapper">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                </svg>
-                <input 
-                  v-model="filters.search" 
-                  @input="applyFilters"
-                  type="text" 
-                  class="search-input" 
-                  placeholder="Search notifications..."
-                />
-                <button v-if="filters.search" @click="clearSearch" class="clear-search">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
+        <div class="filters-row">
+          <div class="filter-group">
+            <label>Filter by Type</label>
+            <select v-model="filters.type" @change="applyFilters">
+              <option value="">All Types</option>
+              <option value="info">Information</option>
+              <option value="alert">Alert</option>
+              <option value="warning">Warning</option>
+              <option value="reminder">Reminder</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label>Target Type</label>
+            <select v-model="filters.targetType" @change="applyFilters">
+              <option value="">All Targets</option>
+              <option value="Violator">Violators</option>
+              <option value="Enforcer">Enforcers</option>
+              <option value="Management">Management</option>
+            </select>
+          </div>
+          
+          <div class="filter-group" v-if="activeView !== 'sent'">
+            <label>Status</label>
+            <select v-model="filters.status" @change="applyFilters">
+              <option value="">All Status</option>
+              <option value="read">Read</option>
+              <option value="unread">Unread</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label>Search</label>
+            <div class="search-container">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input 
+                type="text" 
+                v-model="filters.search" 
+                @input="applyFilters"
+                placeholder="Search notifications..."
+                class="search-input"
+              >
             </div>
           </div>
+          
+          <button @click="clearFilters" class="btn btn-secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"/>
+              <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+            </svg>
+            Clear Filters
+          </button>
         </div>
       </div>
 
       <!-- Notifications List -->
       <div class="notifications-section">
         <div class="section-header">
-          <h2 class="section-title">All Notifications</h2>
-          <div class="section-actions">
-            <button @click="refreshNotifications" class="btn btn-secondary btn-sm" :disabled="loading">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
-              Refresh
-            </button>
-          </div>
+          <h3>{{ getSectionTitle() }}</h3>
+          <button @click="loadNotifications" class="btn btn-ghost" :disabled="loading">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23,4 23,10 17,10"/>
+              <path d="M20.49,15a9,9,0,1,1-2.12-9.36L23,10"/>
+            </svg>
+            Refresh
+          </button>
         </div>
-        
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
+
+        <div v-if="loading" class="loading">
+          <div class="spinner"></div>
           <p>Loading notifications...</p>
         </div>
-        
-        <!-- Empty State -->
-        <div v-else-if="filteredNotifications.length === 0" class="empty-state">
-          <div class="empty-icon">
+
+        <div v-else-if="getCurrentNotifications().length === 0" class="no-data">
+          <div class="no-data-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </div>
           <h3>No notifications found</h3>
-          <p>{{ hasFilters ? 'Try adjusting your filters' : 'Start by sending your first notification' }}</p>
-          <router-link v-if="!hasFilters" to="/admin/notifications/send" class="btn btn-primary">
+          <p v-if="hasActiveFilters">Try adjusting your filters to see more results.</p>
+          <p v-else-if="activeView === 'sent'">You haven't sent any notifications yet.</p>
+          <p v-else-if="activeView === 'received'">You have no received notifications.</p>
+          <p v-else>No notifications in the system.</p>
+          <router-link v-if="activeView === 'sent'" to="/admin/notifications/send" class="btn btn-primary">
             Send First Notification
           </router-link>
         </div>
-        
-        <!-- Notifications List -->
+
         <div v-else class="notifications-list">
           <div 
             v-for="notification in paginatedNotifications" 
-            :key="notification.id"
-            class="notification-card"
-            :class="{ 'notification-failed': notification.status === 'failed' }"
+            :key="notification.id" 
+            class="notification-item"
+            :class="{ 
+              'unread': !notification.read_at && activeView !== 'sent',
+              [`type-${notification.type}`]: true,
+              'sent-item': isSentByCurrentUser(notification)
+            }"
+            @click="handleNotificationClick(notification)"
           >
-            <div class="notification-header">
-              <div class="notification-type" :class="`type-${notification.type}`">
-                <span class="type-icon">{{ getTypeIcon(notification.type) }}</span>
-                <span class="type-text">{{ getTypeLabel(notification.type) }}</span>
-              </div>
-              <div class="notification-status" :class="`status-${notification.status}`">
-                {{ notification.status }}
-              </div>
+            <div class="notification-icon">
+              <svg v-if="notification.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <svg v-else-if="notification.type === 'alert'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <svg v-else-if="notification.type === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <svg v-else-if="notification.type === 'system'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+              </svg>
             </div>
             
             <div class="notification-content">
-              <h3 class="notification-title">{{ notification.title }}</h3>
-              <p class="notification-message">{{ notification.message }}</p>
-            </div>
-            
-            <div class="notification-meta">
-              <div class="meta-left">
-                <span class="meta-item">
-                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                  {{ notification.target_role }}
-                </span>
-                <span class="meta-item">
-                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12,6 12,12 16,14"/>
-                  </svg>
-                  {{ formatDate(notification.created_at) }}
-                </span>
-                <span v-if="notification.recipients_count" class="meta-item">
-                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-                  </svg>
-                  {{ notification.recipients_count }} recipients
-                </span>
+              <div class="notification-header">
+                <h4 class="notification-title">{{ notification.title }}</h4>
+                <div class="notification-meta">
+                  <div class="meta-badges">
+                    <span 
+                      class="notification-type" 
+                      :class="getTypeClass(notification)"
+                    >
+                      {{ getTypeLabel(notification) }}
+                    </span>
+                    <span v-if="isSentByCurrentUser(notification)" class="sent-badge">
+                      SENT BY YOU
+                    </span>
+                  </div>
+                  <span class="notification-date">
+                    {{ formatDateTime(notification.created_at) }}
+                  </span>
+                </div>
               </div>
-              <div class="meta-right">
-                <button @click="viewDetails(notification)" class="btn btn-ghost btn-sm">
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              
+              <div class="notification-message">
+                {{ notification.message }}
+              </div>
+
+              <div class="notification-details">
+                <div class="detail-row">
+                  <div class="detail-item">
+                    <span class="detail-label">From:</span>
+                    <span class="detail-value">{{ getSenderInfo(notification) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">To:</span>
+                    <span class="detail-value">{{ getTargetInfo(notification) }}</span>
+                  </div>
+                </div>
+                <div v-if="notification.violator_id || notification.transaction_id" class="detail-row">
+                  <div v-if="notification.violator_id" class="detail-item">
+                    <span class="detail-label">Violator ID:</span>
+                    <span class="detail-value">#{{ notification.violator_id }}</span>
+                  </div>
+                  <div v-if="notification.transaction_id" class="detail-item">
+                    <span class="detail-label">Transaction ID:</span>
+                    <span class="detail-value">#{{ notification.transaction_id }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-if="showActions(notification)" class="notification-actions">
+                <button 
+                  v-if="notification.violator_id" 
+                  @click.stop="viewViolator(notification.violator_id)" 
+                  class="btn btn-primary btn-sm"
+                >
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  View Details
+                  View Violator
                 </button>
-                <button @click="resendNotification(notification)" v-if="notification.status === 'failed'" class="btn btn-secondary btn-sm">
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                    <path d="M21 3v5h-5"/>
+                <button 
+                  v-if="notification.transaction_id" 
+                  @click.stop="viewTransaction(notification.transaction_id)" 
+                  class="btn btn-secondary btn-sm"
+                >
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
                   </svg>
-                  Resend
+                  View Transaction
                 </button>
+              </div>
+            </div>
+            
+            <div class="notification-status">
+              <div v-if="!notification.read_at && activeView !== 'sent'" class="unread-indicator"></div>
+              <div class="status-actions">
+                <button 
+                  v-if="activeView !== 'sent' && !isSentByCurrentUser(notification)"
+                  @click.stop="toggleRead(notification)" 
+                  class="btn btn-ghost btn-xs"
+                  :title="notification.read_at ? 'Mark as unread' : 'Mark as read'"
+                >
+                  <svg v-if="notification.read_at" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v10l-4-4H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </button>
+                <div class="more-actions">
+                  <button class="btn btn-ghost btn-xs" @click.stop="showNotificationMenu(notification)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination-container">
-          <div class="pagination-info">
-            Showing {{ ((currentPage - 1) * pageSize) + 1 }} to {{ Math.min(currentPage * pageSize, filteredNotifications.length) }} 
-            of {{ filteredNotifications.length }} notifications
+        <div v-if="totalPages > 1" class="pagination">
+          <button 
+            @click="currentPage = 1" 
+            :disabled="currentPage === 1"
+            class="btn btn-secondary btn-sm"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="11,17 6,12 11,7"/>
+              <polyline points="18,17 13,12 18,7"/>
+            </svg>
+            First
+          </button>
+          <button 
+            @click="currentPage--" 
+            :disabled="currentPage === 1"
+            class="btn btn-secondary btn-sm"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15,18 9,12 15,6"/>
+            </svg>
+            Previous
+          </button>
+          
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          
+          <button 
+            @click="currentPage++" 
+            :disabled="currentPage === totalPages"
+            class="btn btn-secondary btn-sm"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"/>
+            </svg>
+            Next
+          </button>
+          <button 
+            @click="currentPage = totalPages" 
+            :disabled="currentPage === totalPages"
+            class="btn btn-secondary btn-sm"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="13,17 18,12 13,7"/>
+              <polyline points="6,17 11,12 6,7"/>
+            </svg>
+            Last
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="actions-grid">
+          <div class="action-card">
+            <div class="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h18l-9 15L3 3z"/>
+              </svg>
+            </div>
+            <div class="action-content">
+              <h4>Broadcast Notification</h4>
+              <p>Send notification to all users or specific groups</p>
+              <router-link to="/admin/notifications/broadcast" class="btn btn-primary btn-sm">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 3h18l-9 15L3 3z"/>
+                </svg>
+                Broadcast
+              </router-link>
+            </div>
           </div>
-          <div class="pagination">
-            <button 
-              @click="goToPage(currentPage - 1)" 
-              :disabled="currentPage === 1"
-              class="pagination-btn"
-            >
+          
+          <div class="action-card">
+            <div class="action-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15,18 9,12 15,6"/>
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
               </svg>
-            </button>
-            
-            <button 
-              v-for="page in visiblePages" 
-              :key="page"
-              @click="goToPage(page)"
-              :class="['pagination-btn', { active: currentPage === page }]"
-            >
-              {{ page }}
-            </button>
-            
-            <button 
-              @click="goToPage(currentPage + 1)" 
-              :disabled="currentPage === totalPages"
-              class="pagination-btn"
-            >
+            </div>
+            <div class="action-content">
+              <h4>System Templates</h4>
+              <p>Manage notification templates and settings</p>
+              <router-link to="/admin/notifications/templates" class="btn btn-primary btn-sm">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Manage Templates
+              </router-link>
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9,18 15,12 9,6"/>
+                <path d="M3 3v5h5m6-5a9 9 0 1 1-4.2 1.6"/>
               </svg>
-            </button>
+            </div>
+            <div class="action-content">
+              <h4>Notification History</h4>
+              <p>View detailed logs and analytics</p>
+              <router-link to="/admin/notifications/history" class="btn btn-primary btn-sm">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                View History
+              </router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -291,6 +469,7 @@
 import { ref, computed, onMounted } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'AdminNotifications',
@@ -298,108 +477,151 @@ export default {
     SidebarLayout
   },
   setup() {
+    const authStore = useAuthStore()
+    const currentUser = computed(() => authStore.state.user)
     const loading = ref(true)
     const notifications = ref([])
     const currentPage = ref(1)
-    const pageSize = ref(10)
+    const itemsPerPage = ref(10)
+    const activeView = ref('all')
+    const error = ref(null)
     
     const filters = ref({
       type: '',
-      target: '',
+      targetType: '',
       status: '',
       search: ''
     })
     
-    const stats = ref({
-      total: 0,
-      sent: 0,
-      pending: 0,
-      failed: 0
-    })
+    const loadNotifications = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    console.log('Fetching notifications...')
     
-    // Computed properties
-    const hasFilters = computed(() => {
-      return Object.values(filters.value).some(filter => filter !== '')
-    })
+    const response = await adminAPI.getNotifications()
     
+    if (response.data.status === 'success') {
+      const rawData = response.data.data
+      notifications.value = Array.isArray(rawData) ? rawData : []
+    } else {
+      error.value = response.data.message || 'Failed to load notifications'
+      console.error('API Error:', error.value)
+    }
+  } catch (err) {
+    console.error('Failed to load notifications:', err)
+    error.value = 'Failed to load notifications. Please try again.'
+    notifications.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+    // Computed properties for different views
+const sentNotifications = computed(() => {
+  if (!currentUser.value) return []
+  
+  return notifications.value.filter(n => {
+    const isSenderMatch = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
+    const isRoleMatch = n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+    
+    return isSenderMatch && isRoleMatch
+  })
+})
+
+const receivedNotifications = computed(() => {
+  if (!currentUser.value) return []
+  return notifications.value.filter(n => {
+    // Notifications received by the current admin
+    return (
+      (n.target_id === currentUser.value.id && n.target_type === currentUser.value.role) ||
+      (n.target_type === 'Management' && !n.target_id)
+    )
+  })
+})
+
+
+    const allNotifications = computed(() => notifications.value)
+
     const filteredNotifications = computed(() => {
-      let result = notifications.value
+      let result = []
       
+      // Get notifications based on active view
+      switch (activeView.value) {
+        case 'sent':
+          result = sentNotifications.value
+          break
+        case 'received':
+          result = receivedNotifications.value
+          break
+        default:
+          result = allNotifications.value
+      }
+      
+      // Apply type filter
       if (filters.value.type) {
         result = result.filter(n => n.type === filters.value.type)
       }
       
-      if (filters.value.target) {
-        result = result.filter(n => n.target_role === filters.value.target)
+      // Apply target type filter
+      if (filters.value.targetType) {
+        result = result.filter(n => n.target_type === filters.value.targetType)
       }
       
-      if (filters.value.status) {
-        result = result.filter(n => n.status === filters.value.status)
+      // Apply status filter (only for received notifications)
+      if (filters.value.status && activeView.value !== 'sent') {
+        if (filters.value.status === 'unread') {
+          result = result.filter(n => !n.read_at)
+        } else if (filters.value.status === 'read') {
+          result = result.filter(n => n.read_at)
+        }
       }
       
+      // Apply search filter
       if (filters.value.search) {
-        const searchTerm = filters.value.search.toLowerCase()
+        const search = filters.value.search.toLowerCase()
         result = result.filter(n => 
-          n.title.toLowerCase().includes(searchTerm) ||
-          n.message.toLowerCase().includes(searchTerm)
+          n.title.toLowerCase().includes(search) ||
+          n.message.toLowerCase().includes(search)
         )
       }
       
       return result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     })
+
+    const getCurrentNotifications = () => {
+      return filteredNotifications.value
+    }
+
+    const paginatedNotifications = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value
+      const end = start + itemsPerPage.value
+      return getCurrentNotifications().slice(start, end)
+    })
     
     const totalPages = computed(() => {
-      return Math.ceil(filteredNotifications.value.length / pageSize.value)
+      return Math.ceil(getCurrentNotifications().length / itemsPerPage.value)
     })
+
+    const stats = computed(() => ({
+      sent: sentNotifications.value.length,
+      received: receivedNotifications.value.length,
+      total: allNotifications.value.length,
+      unread: receivedNotifications.value.filter(n => !n.read_at).length
+    }))
     
-    const paginatedNotifications = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredNotifications.value.slice(start, end)
-    })
-    
-    const visiblePages = computed(() => {
-      const pages = []
-      const total = totalPages.value
-      const current = currentPage.value
-      
-      if (total <= 7) {
-        for (let i = 1; i <= total; i++) {
-          pages.push(i)
-        }
-      } else {
-        if (current <= 4) {
-          pages.push(1, 2, 3, 4, 5, '...', total)
-        } else if (current >= total - 3) {
-          pages.push(1, '...', total - 4, total - 3, total - 2, total - 1, total)
-        } else {
-          pages.push(1, '...', current - 1, current, current + 1, '...', total)
-        }
-      }
-      
-      return pages.filter(page => page !== '...' || pages.indexOf(page) === pages.lastIndexOf(page))
-    })
-    
-    // Methods
-    const fetchNotifications = async () => {
-      try {
-        loading.value = true
-        const response = await adminAPI.getNotifications()
-        notifications.value = response.data.data || []
-        updateStats()
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-    
-    const updateStats = () => {
-      stats.value = {
-        total: notifications.value.length,
-        sent: notifications.value.filter(n => n.status === 'sent').length,
-        pending: notifications.value.filter(n => n.status === 'pending').length,
-        failed: notifications.value.filter(n => n.status === 'failed').length
+    const hasActiveFilters = computed(() => 
+      filters.value.type || filters.value.targetType || filters.value.status || filters.value.search
+    )
+
+    const getSectionTitle = () => {
+      switch (activeView.value) {
+        case 'sent':
+          return `Notifications Sent by You (${getCurrentNotifications().length})`
+        case 'received':
+          return `Notifications Received (${getCurrentNotifications().length})`
+        default:
+          return `All System Notifications (${getCurrentNotifications().length})`
       }
     }
     
@@ -407,150 +629,231 @@ export default {
       currentPage.value = 1
     }
     
-    const clearSearch = () => {
-      filters.value.search = ''
-      applyFilters()
+    const clearFilters = () => {
+      filters.value = {
+        type: '',
+        targetType: '',
+        status: '',
+        search: ''
+      }
+      currentPage.value = 1
+    }
+
+    const isSentByCurrentUser = (notification) => {
+      if (!currentUser?.value || !notification) return false
+      
+      const isSenderMatch = notification.sender_id && 
+             notification.sender_id.toString() === currentUser.value.id.toString()
+      const isRoleMatch = notification.sender_role &&
+             notification.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+      
+      return isSenderMatch && isRoleMatch
+    }
+
+    const getSenderInfo = (notification) => {
+      if (notification.sender_name) {
+        return notification.sender_name
+      }
+      if (notification.sender_role && notification.sender_id) {
+        return `${notification.sender_role} #${notification.sender_id}`
+      }
+      return 'System'
+    }
+
+    const getTargetInfo = (notification) => {
+      if (notification.target_type === 'Management') {
+        return 'Management Team'
+      }
+      if (notification.target_type && notification.target_id) {
+        return `${notification.target_type} #${notification.target_id}`
+      }
+      return notification.target_type || 'Management'
+    }
+
+    const getTypeClass = (notification) => {
+      if (notification.read_at && activeView.value !== 'sent') {
+        return 'read'
+      }
+      return `type-${notification.type}`
+    }
+
+    const getTypeLabel = (notification) => {
+      if (notification.read_at && activeView.value !== 'sent') {
+        return 'READ'
+      }
+      // Default to 'info' if type is not specified
+      const type = notification?.type || 'info'
+      return type.toString().toUpperCase()
+    }
+
+    const showActions = (notification) => {
+      return notification.violator_id || notification.transaction_id
     }
     
-    const refreshNotifications = () => {
-      fetchNotifications()
-    }
-    
-    const goToPage = (page) => {
-      if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page
+    const handleNotificationClick = (notification) => {
+      if (activeView.value !== 'sent' && !isSentByCurrentUser(notification) && !notification.read_at) {
+        markAsRead(notification)
       }
     }
-    
-    const viewDetails = (notification) => {
-      // Navigate to details view or show modal
-      console.log('View details:', notification)
-    }
-    
-    const resendNotification = async (notification) => {
+
+    const markAsRead = async (notification) => {
+      if (!notification || notification.read_at || isSentByCurrentUser(notification)) return
+      
       try {
-        await adminAPI.resendNotification(notification.id)
-        await fetchNotifications()
-      } catch (error) {
-        console.error('Failed to resend notification:', error)
+        await adminAPI.markNotificationAsRead(notification.id)
+        notification.read_at = new Date().toISOString()
+      } catch (err) {
+        console.error('Failed to mark notification as read:', err)
       }
     }
     
-    const getTypeIcon = (type) => {
-      const icons = {
-        system: '⚙️',
-        manual: '✍️',
-        payment: '💰',
-        warning: '⚠️',
-        info: 'ℹ️',
-        reminder: '⏰'
+    const toggleRead = async (notification) => {
+      if (!notification || isSentByCurrentUser(notification)) return
+      
+      try {
+        if (notification.read_at) {
+          await adminAPI.markNotificationAsUnread(notification.id)
+          notification.read_at = null
+        } else {
+          await adminAPI.markNotificationAsRead(notification.id)
+          notification.read_at = new Date().toISOString()
+        }
+      } catch (err) {
+        console.error('Failed to toggle notification status:', err)
       }
-      return icons[type] || '📢'
+    }
+
+    const viewViolator = (violatorId) => {
+      // Navigate to violator details
+      window.location.href = `/admin/violators/${violatorId}`
+    }
+
+    const viewTransaction = (transactionId) => {
+      // Navigate to transaction details
+      window.location.href = `/admin/transactions/${transactionId}`
+    }
+
+    const showNotificationMenu = (notification) => {
+      // Show context menu for additional actions
+      console.log('Show menu for notification:', notification.id)
     }
     
-    const getTypeLabel = (type) => {
-      const labels = {
-        system: 'System',
-        manual: 'Manual',
-        payment: 'Payment',
-        warning: 'Warning',
-        info: 'Information',
-        reminder: 'Reminder'
+    const formatDateTime = (dateString) => {
+      if (!dateString) return ''
+      
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffInHours = (now - date) / (1000 * 60 * 60)
+      
+      if (diffInHours < 1) {
+        const minutes = Math.floor((now - date) / (1000 * 60))
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
+      } else if (diffInHours < 24) {
+        const hours = Math.floor(diffInHours)
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+      } else if (diffInHours < 168) { // 7 days
+        const days = Math.floor(diffInHours / 24)
+        return `${days} day${days !== 1 ? 's' : ''} ago`
+      } else {
+        return date.toLocaleDateString('en-PH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       }
-      return labels[type] || type
-    }
-    
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('en-PH', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
     }
     
     onMounted(() => {
-      fetchNotifications()
+      // Initialize auth store to get current user
+      authStore.initAuth()
+      loadNotifications()
     })
     
     return {
       loading,
       notifications,
       currentPage,
-      pageSize,
+      activeView,
       filters,
+      error,
       stats,
-      hasFilters,
+      sentNotifications,
+      receivedNotifications,
       filteredNotifications,
-      totalPages,
+      getCurrentNotifications,
       paginatedNotifications,
-      visiblePages,
-      fetchNotifications,
+      totalPages,
+      hasActiveFilters,
+      getSectionTitle,
       applyFilters,
-      clearSearch,
-      refreshNotifications,
-      goToPage,
-      viewDetails,
-      resendNotification,
-      getTypeIcon,
+      clearFilters,
+      isSentByCurrentUser,
+      getSenderInfo,
+      getTargetInfo,
+      getTypeClass,
       getTypeLabel,
-      formatDate
+      showActions,
+      handleNotificationClick,
+      markAsRead,
+      toggleRead,
+      viewViolator,
+      viewTransaction,
+      showNotificationMenu,
+      formatDateTime,
+      loadNotifications
     }
   }
 }
 </script>
 
 <style scoped>
-.notifications-container {
+.admin-notifications {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0;
 }
 
-/* Page Header */
 .page-header {
   background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  color: white;
   border-radius: 16px;
   padding: 32px;
   margin-bottom: 32px;
-  color: white;
-}
-
-.header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
 }
 
-.page-title {
+.header-content h2 {
   font-size: 32px;
   font-weight: 700;
   margin: 0 0 8px 0;
 }
 
-.page-subtitle {
+.header-content p {
   font-size: 16px;
   opacity: 0.9;
   margin: 0;
 }
 
 .header-actions .btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
 }
 
-.header-actions .btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+.header-actions .btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
-/* Stats Grid */
-.stats-grid {
+.notification-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -558,26 +861,28 @@ export default {
 .stat-card {
   background: white;
   border-radius: 16px;
-  padding: 24px;
+  padding: 28px;
+  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  gap: 20px;
   transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px -3px rgba(0, 0, 0, 0.15);
 }
 
 .stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  color: white;
 }
 
 .stat-icon svg {
@@ -585,29 +890,26 @@ export default {
   height: 24px;
 }
 
-.stat-icon.info {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+.stat-icon.sent {
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.stat-icon.success {
-  background: linear-gradient(135deg, #11998e, #38ef7d);
-  color: white;
+.stat-icon.received {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
 }
 
-.stat-icon.warning {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
-  color: white;
+.stat-icon.total {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
-.stat-icon.error {
-  background: linear-gradient(135deg, #ff9a9e, #fecfef);
-  color: white;
+.stat-icon.unread {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  animation: pulse 2s infinite;
 }
 
 .stat-number {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   color: #1f2937;
   line-height: 1;
 }
@@ -615,54 +917,102 @@ export default {
 .stat-label {
   font-size: 14px;
   color: #6b7280;
+  margin-top: 4px;
   font-weight: 500;
 }
 
-/* Filters Section */
-.filters-section {
-  margin-bottom: 32px;
+.view-toggle-section {
+  margin-bottom: 24px;
 }
 
-.filters-card {
+.view-toggle {
   background: white;
   border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 4px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.toggle-btn:hover {
+  background: #f8fafc;
+  color: #374151;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.filters-section {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .filters-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  display: flex;
+  gap: 24px;
+  align-items: end;
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 180px;
 }
 
-.filter-label {
+.filter-group label {
   font-size: 14px;
   font-weight: 600;
   color: #374151;
 }
 
-.filter-select {
+.filter-group select {
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
+  border-radius: 10px;
   font-size: 14px;
   transition: all 0.2s ease;
+  background: white;
 }
 
-.filter-select:focus {
+.filter-group select:focus {
+  outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.search-input-wrapper {
+.search-container {
   position: relative;
 }
 
@@ -671,442 +1021,640 @@ export default {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: #6b7280;
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
 }
 
 .search-input {
-  width: 100%;
-  padding: 12px 16px 12px 44px;
+  padding: 12px 16px 12px 40px;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   transition: all 0.2s ease;
+  background: white;
+  width: 100%;
 }
 
 .search-input:focus {
+  outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.clear-search {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  color: #6b7280;
-}
-
-.clear-search:hover {
-  background: #f3f4f6;
-}
-
-.clear-search svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Notifications Section */
 .notifications-section {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  margin-bottom: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 28px;
+  border-bottom: 2px solid #f3f4f6;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.section-title {
+.section-header h3 {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2937;
   margin: 0;
 }
 
-/* Loading and Empty States */
-.loading-container {
-  padding: 80px;
-  text-align: center;
-  color: #6b7280;
+.notifications-list {
+  max-height: 800px;
+  overflow-y: auto;
 }
 
-.loading-spinner {
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.notification-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background: #fafbfc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.unread {
+  background: linear-gradient(to right, #f0f9ff, #ffffff);
+}
+
+.notification-item.unread::before {
+  background: #3b82f6;
+}
+
+.notification-item.sent-item {
+  background: linear-gradient(to right, #f0fdf4, #ffffff);
+}
+
+.notification-item.sent-item::before {
+  background: #10b981;
+}
+
+.notification-item.type-alert::before {
+  background: #ef4444;
+}
+
+.notification-item.type-warning::before {
+  background: #f59e0b;
+}
+
+.notification-item.type-system::before {
+  background: #8b5cf6;
+}
+
+.notification-item.type-info::before {
+  background: #10b981;
+}
+
+.notification-icon {
   width: 40px;
   height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
-}
-
-.empty-state {
-  padding: 80px;
-  text-align: center;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  background: #f3f4f6;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.empty-icon svg {
-  width: 40px;
-  height: 40px;
-  color: #9ca3af;
+.notification-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
-.empty-state h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+.notification-item.type-info .notification-icon {
+  background: #ecfdf5;
+  color: #059669;
 }
 
-.empty-state p {
-  color: #6b7280;
-  margin: 0 0 24px 0;
-}
-
-/* Notifications List */
-.notifications-list {
-  padding: 24px;
-}
-
-.notification-card {
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  transition: all 0.3s ease;
-}
-
-.notification-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.notification-card:last-child {
-  margin-bottom: 0;
-}
-
-.notification-failed {
-  border-color: #fca5a5;
+.notification-item.type-alert .notification-icon {
   background: #fef2f2;
+  color: #dc2626;
+}
+
+.notification-item.type-warning .notification-icon {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.notification-item.type-system .notification-icon {
+  background: #faf5ff;
+  color: #7c3aed;
+}
+
+.notification-item.sent-item .notification-icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .notification-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 12px;
 }
 
-.notification-type {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.type-system { background: #e0e7ff; color: #3730a3; }
-.type-manual { background: #f3e8ff; color: #6b21a8; }
-.type-payment { background: #ecfdf5; color: #047857; }
-.type-warning { background: #fef3c7; color: #92400e; }
-.type-info { background: #dbeafe; color: #1e40af; }
-.type-reminder { background: #fed7aa; color: #ea580c; }
-
-.notification-status {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-sent { background: #dcfce7; color: #166534; }
-.status-pending { background: #fef3c7; color: #92400e; }
-.status-failed { background: #fee2e2; color: #dc2626; }
-
-.notification-content {
-  margin-bottom: 16px;
-}
-
 .notification-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.notification-message {
-  color: #6b7280;
-  line-height: 1.5;
   margin: 0;
+  line-height: 1.4;
 }
 
 .notification-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.meta-left {
+.meta-badges {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
 }
 
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.notification-type {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.notification-type.read {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.notification-type.type-info {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.notification-type.type-alert {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.notification-type.type-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.notification-type.type-system {
+  background: #ede9fe;
+  color: #6b21a8;
+}
+
+.sent-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.notification-date {
   font-size: 12px;
   color: #6b7280;
+  font-weight: 500;
 }
 
-.meta-icon {
-  width: 14px;
-  height: 14px;
+.notification-message {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  font-size: 15px;
 }
 
-.meta-right {
+.notification-details {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.detail-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item {
   display: flex;
   gap: 8px;
 }
 
-/* Buttons */
+.detail-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-value {
+  color: #6b7280;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.notification-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.unread-indicator {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.more-actions {
+  position: relative;
+}
+
+.pagination {
+  padding: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 20px;
+  font-weight: 500;
+}
+
+.quick-actions {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.quick-actions h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 28px 0;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.action-card {
+  border: 2px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  gap: 20px;
+  transition: all 0.3s ease;
+  background: #fafbfc;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -3px rgba(0, 0, 0, 0.1);
+  border-color: #e5e7eb;
+  background: white;
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.action-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-content h4 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.action-content p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.no-data {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.no-data-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  color: #9ca3af;
+}
+
+.no-data-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.no-data h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.no-data p {
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  font-size: 15px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-align: center;
   white-space: nowrap;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.4);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #2563eb, #1e40af);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.4);
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .btn-ghost {
   background: transparent;
-  color: #6b7280;
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.btn-sm {
-  padding: 8px 12px;
-  font-size: 12px;
-}
-
-/* Pagination */
-.pagination-container {
-  padding: 24px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.pagination-info {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #6b7280;
+  border: none;
+  padding: 8px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 500;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.btn-ghost:hover {
   background: #f3f4f6;
-  border-color: #9ca3af;
 }
 
-.pagination-btn:disabled {
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.btn-xs {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.pagination-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-}
-
-.pagination-btn svg {
+.icon {
   width: 16px;
   height: 16px;
 }
 
-/* Animations */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .filters-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
   .page-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
     padding: 24px;
   }
   
-  .page-title {
-    font-size: 24px;
+  .header-content h2 {
+    font-size: 28px;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .notification-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .view-toggle {
+    flex-direction: column;
+    padding: 4px;
   }
   
   .filters-row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
   
-  .section-header {
+  .filter-group {
+    min-width: unset;
+  }
+  
+  .notification-item {
     flex-direction: column;
-    align-items: flex-start;
     gap: 16px;
-  }
-  
-  .notification-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .meta-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .pagination-container {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .notifications-list {
-    padding: 16px;
-  }
-  
-  .notification-card {
-    padding: 16px;
+    padding: 20px;
   }
   
   .notification-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .notification-meta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .detail-row {
+    flex-direction: column;
     gap: 8px;
   }
   
-  .meta-right {
-    width: 100%;
-    justify-content: flex-start;
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .page-info {
+    order: -1;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .notifications-list {
+    padding: 16px;
+  }
+  
+  .notification-item {
+    padding: 16px;
+  }
+  
+  .notification-status {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .meta-badges {
+    flex-wrap: wrap;
   }
 }
 </style>

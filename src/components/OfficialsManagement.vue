@@ -100,7 +100,7 @@
                       <div class="user-avatar">
                         <img 
                         v-if="user.image" 
-                        :src="`http://127.0.0.1:8000/storage/${user.image}`" 
+                        :src="`http://127.0.0.1:8000${user.image}`" 
                         alt="avatar" 
                         class="avatar-img"
                       />
@@ -126,7 +126,7 @@
                   </td>
                   <td>
                     <div class="user-name">
-                      {{ user.office }}
+                      {{ user.office || 'POSU' }}
                     </div>
                   </td>
                   <td>

@@ -473,6 +473,8 @@ export default {
 
     const getNotificationsRoute = () => {
       const roleRoutes = {
+        'Head': '/admin/notifications/view',
+        'Deputy': '/admin/notifications/view',
         'Admin': '/admin/notifications/view',
         'Violator': '/violator/notifications'
       }

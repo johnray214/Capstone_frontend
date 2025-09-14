@@ -291,7 +291,7 @@
 <div v-if="showEditViolatorModal" class="modal-overlay" @click="closeEditViolatorModal">
   <div class="modal" @click.stop>
     <div class="modal-header">
-      <h3>{{ showEditViolatorModal}} Edit Violator </h3>
+      <h3>Edit Violator </h3>
       <button @click="closeEditViolatorModal" class="modal-close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

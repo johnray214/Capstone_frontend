@@ -95,17 +95,34 @@
       <section class="content-grid">
         <!-- Trends Chart -->
         <section class="chart-card" aria-label="Violation Trends">
+          <!-- Update your chart header section -->
           <header class="card-header">
             <h3>Violation Trends</h3>
             <div class="chart-controls">
-              <button 
-                v-for="period in chartPeriods" 
-                :key="period.value"
-                @click="selectedChartPeriod = period.value"
-                :class="['control-btn', { active: selectedChartPeriod === period.value }]"
-              >
-                {{ period.label }}
-              </button>
+              <!-- Chart period buttons -->
+              <div class="control-group">
+                <button 
+                  v-for="period in chartPeriods" 
+                  :key="period.value"
+                  @click="selectedChartPeriod = period.value"
+                  :class="['control-btn', { active: selectedChartPeriod === period.value }]"
+                >
+                  {{ period.label }}
+                </button>
+              </div>
+              
+              <!-- Year picker (only show when monthly is selected) -->
+              <div v-if="selectedChartPeriod === 'monthly'" class="year-picker">
+                <select 
+                  v-model="selectedYear" 
+                  class="year-select"
+                  aria-label="Select Year"
+                >
+                  <option v-for="year in availableYears" :key="year" :value="year">
+                    {{ year }}
+                  </option>
+                </select>
+              </div>
             </div>
           </header>
           <div class="chart-container">
@@ -478,11 +495,12 @@ export default {
     const trendsData = ref({})
     
     // Filter states
-    const selectedPeriod = ref('all')
-    const selectedChartPeriod = ref('weekly')
-    const performanceTarget = ref(5)
+    const selectedPeriod = ref('month')
+    const selectedChartPeriod = ref('monthly')
+    const performanceTarget = ref(30)
     const newTarget = ref(5)
     const showEditTargetModal = ref(false)
+    const selectedYear = ref(new Date().getFullYear())
     
     // Filter options
     const filterPeriods = [
@@ -616,25 +634,32 @@ export default {
         }
       ]
     })
+
+    const availableYears = computed(() => {
+      if (!monthlyData.value.length) return [new Date().getFullYear()]
+      return [...new Set(monthlyData.value.map(item => item.year))].sort((a, b) => b - a)
+    })
     
     const chartData = computed(() => {
-      switch (selectedChartPeriod.value) {
-        case 'monthly':
-          return monthlyData.value.map(item => ({
-            ...item,
-            date: `${item.month}-01`,
-            period: item.month
-          }))
-        case 'yearly':
-          return yearlyData.value.map(item => ({
-            ...item,
-            date: `${item.year}-01-01`,
-            period: item.year
-          }))
-        default:
-          return weeklyData.value
-      }
-    })
+  switch (selectedChartPeriod.value) {
+    case 'monthly':
+      return monthlyData.value
+        .filter(item => item.year === selectedYear.value)
+        .map(item => ({
+          ...item,
+          date: `${item.year}-${String(item.month).padStart(2, '0')}-01`,
+          period: item.month
+        }))
+    case 'yearly':
+      return yearlyData.value.map(item => ({
+        ...item,
+        date: `${item.year}-01-01`,
+        period: item.year
+      }))
+    default:
+      return weeklyData.value
+  }
+})
     
     const maxChartCount = computed(() => {
       return Math.max(...chartData.value.map(d => d.count), 1)
@@ -652,11 +677,15 @@ export default {
     const loadDashboardData = async () => {
       try {
         loading.value = true
-        const response = await adminAPI.dashboard({
-          period: selectedPeriod.value,
-          chart_period: selectedChartPeriod.value
-        })
-        
+
+        const requestParams = {
+      period: selectedPeriod.value,
+      chart_period: selectedChartPeriod.value
+    }
+
+    
+    const response = await adminAPI.dashboard(requestParams)
+    
         if (response.data.status === 'success') {
           const data = response.data.data
           stats.value = data.stats || {}
@@ -780,8 +809,11 @@ export default {
       showEditTargetModal.value = false
       newTarget.value = performanceTarget.value
     }
-    
-    watch([selectedPeriod, selectedChartPeriod], () => {
+    const handlePeriodChange = (period) => {
+    selectedPeriod.value = period
+      }
+
+      watch([selectedPeriod, selectedChartPeriod], () => {
       loadDashboardData()
     })
     
@@ -819,7 +851,10 @@ export default {
       hideTooltip,
       getPeriodApprehensions,
       updateTarget,
-      closeModal
+      closeModal,
+      handlePeriodChange,
+      selectedYear,
+      availableYears
     }
   }
 }
@@ -1118,12 +1153,63 @@ export default {
   color: #64748b;
 }
 
+/* Add this to your CSS */
 .chart-controls {
   display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 4px;
-  border-radius: 12px;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.year-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #1f2937;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  min-width: 80px;
+}
+
+.year-select:hover {
+  border-color: #3b82f6;
+}
+
+.year-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chart-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .control-group {
+    order: 1;
+  }
+  
+  .year-picker {
+    order: 2;
+  }
 }
 
 .control-btn {

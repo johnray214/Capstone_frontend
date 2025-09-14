@@ -1,9 +1,9 @@
 // src/services/api.js
-import axios from 'axios';
+import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-   baseURL: 'https://capstonebackend-production-ed22.up.railway.app/api',
+   baseURL: 'http://127.0.0.1:8000/api',
    timeout: 60000,
    headers: {
       Accept: 'application/json',
@@ -12,40 +12,40 @@ const api = axios.create({
 
 // Request interceptor → attach token
 api.interceptors.request.use(
-   (config) => {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-         config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-   },
-   (error) => Promise.reject(error)
+    (config) => {
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
 );
 
 // Response interceptor → auto logout on 401
 api.interceptors.response.use(
-   (response) => response,
-   (error) => {
-      if (error.response?.status === 401) {
-         localStorage.removeItem('auth_token');
-         localStorage.removeItem('user_data');
-         window.location.href = '/login';
-      }
-      return Promise.reject(error);
-   }
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("user_data");
+            window.location.href = "/login";
+        }
+        return Promise.reject(error);
+    }
 );
 
 /* ============================
    AUTH API
 ============================ */
 export const authAPI = {
-   login: (credentials) => api.post('/login', credentials),
-   register: (data) => api.post('/register', data),
-   logout: () => api.post('/logout'),
-   profile: () => api.get('/profile'),
-   getRoles: () => api.get('/roles'),
-   forgotPassword: (identifier) => api.post('/forgot-password', { identifier }),
-   resetPassword: (data) => api.post('/reset-password', data),
+    login: (credentials) => api.post("/login", credentials),
+    register: (data) => api.post("/register", data),
+    logout: () => api.post("/logout"),
+    profile: () => api.get("/profile"),
+    getRoles: () => api.get("/roles"),
+    forgotPassword: (identifier) => api.post("/forgot-password", { identifier }),
+    resetPassword: (data) => api.post("/reset-password", data),
 };
 
 /* ============================
@@ -53,7 +53,7 @@ export const authAPI = {
 ============================ */
 export const adminAPI = {
    // Dashboard
-   dashboard: () => api.get('/admin/dashboard'),
+   dashboard: (params) => api.get('/admin/dashboard', { params }),
 
    // Officials Management
    getUsers: (role = '') =>
@@ -106,6 +106,7 @@ export const adminAPI = {
 
    // Notifications
    getNotifications: () => api.get('/admin/notifications'),
+   getSentNotifications: () => api.get('/admin/notifications/sent'),
    markNotificationAsRead: (id) => api.post(`/admin/notifications/${id}/read`),
    markNotificationAsUnread: (id) =>
       api.post(`/admin/notifications/${id}/unread`),
@@ -122,57 +123,52 @@ export const adminAPI = {
    ENFORCER API
 ============================ */
 export const enforcerAPI = {
-   // Dashboard
-   dashboard: () => api.get('/enforcer/dashboard'),
-
-   // Violations
-   getViolations: (status = '') =>
-      api.get(`/enforcer/violations${status ? `?status=${status}` : ''}`),
-   recordViolation: (data) => api.post('/enforcer/violations', data),
-   getViolationDetails: (id) => api.get(`/enforcer/violations/${id}`),
-   updateViolationStatus: (id, status) =>
-      api.patch(`/enforcer/violations/${id}/status`, { status }),
-   getViolationTypes: () => api.get('/enforcer/violation-types'),
-
-   // Violators
-   searchViolators: (query) =>
-      api.get(`/enforcer/violators/search?q=${encodeURIComponent(query)}`),
-   getViolatorDetails: (id) => api.get(`/enforcer/violators/${id}`),
-
-   // Transactions
-   getTransactions: (params = {}) =>
-      api.get('/enforcer/transactions', { params }),
-   getTransaction: (id) => api.get(`/enforcer/transactions/${id}`),
-   updateTransaction: (id, data) =>
-      api.put(`/enforcer/transactions/${id}`, data),
-
-   // Profile
-   getProfile: () => api.get('/enforcer/profile'),
-   updateProfile: (data) => api.put('/enforcer/profile', data),
-   changePassword: (data) => api.post('/enforcer/change-password', data),
-
-   // Performance
-   getPerformanceStats: () => api.get('/enforcer/performance'),
+    // Dashboard
+    dashboard: () => api.get("/enforcer/dashboard"),
+    
+    // Violations
+    getViolations: (status = '') => api.get(`/enforcer/violations${status ? `?status=${status}` : ''}`),
+    recordViolation: (data) => api.post("/enforcer/violations", data),
+    getViolationDetails: (id) => api.get(`/enforcer/violations/${id}`),
+    updateViolationStatus: (id, status) => api.patch(`/enforcer/violations/${id}/status`, { status }),
+    getViolationTypes: () => api.get("/enforcer/violation-types"),
+    
+    // Violators
+    searchViolators: (query) => api.get(`/enforcer/violators/search?q=${encodeURIComponent(query)}`),
+    getViolatorDetails: (id) => api.get(`/enforcer/violators/${id}`),
+    
+    // Transactions
+    getTransactions: (params = {}) => api.get("/enforcer/transactions", { params }),
+    getTransaction: (id) => api.get(`/enforcer/transactions/${id}`),
+    updateTransaction: (id, data) => api.put(`/enforcer/transactions/${id}`, data),
+    
+    // Profile
+    getProfile: () => api.get("/enforcer/profile"),
+    updateProfile: (data) => api.put("/enforcer/profile", data),
+    changePassword: (data) => api.post("/enforcer/change-password", data),
+    
+    // Performance
+    getPerformanceStats: () => api.get("/enforcer/performance"),
 };
 /* ============================
    VIOLATOR API
 ============================ */
 export const violatorAPI = {
-   dashboard: () => api.get('/violator/dashboard'),
-   getHistory: () => api.get('/violator/history'),
-   getViolationDetails: (id) => api.get(`/violator/violations/${id}`),
-   updateProfile: (data) => api.post('/violator/profile', data),
-   changePassword: (data) => api.post('/violator/change-password', data),
-   uploadReceipt: (data) => api.post('/violator/upload-receipt', data),
-   getNotifications: () => api.get('/violator/notifications'),
-   markNotificationAsRead: (id) =>
-      api.post(`/violator/notifications/${id}/read`),
-   markNotificationAsUnread: (id) =>
-      api.post(`/violator/notifications/${id}/unread`),
-   markAllNotificationsAsRead: () =>
-      api.post(`/violator/notifications/mark-all-read`),
-   getStatistics: () => api.get('/violator/statistics'),
-   getProfile: () => api.get('/violator/profile'),
+    dashboard: () => api.get("/violator/dashboard"),
+    getHistory: () => api.get("/violator/history"),
+    getViolationDetails: (id) => api.get(`/violator/violations/${id}`),
+    updateProfile: (data) => api.post("/violator/profile", data),
+    changePassword: (data) => api.post("/violator/change-password", data),
+    uploadReceipt: (data) => api.post("/violator/upload-receipt", data),
+    getNotifications: () => api.get("/violator/notifications"),
+    markNotificationAsRead: (id) =>
+        api.post(`/violator/notifications/${id}/read`),
+    markNotificationAsUnread: (id) =>
+        api.post(`/violator/notifications/${id}/unread`),
+    markAllNotificationsAsRead: () =>
+        api.post(`/violator/notifications/mark-all-read`),
+    getStatistics: () => api.get("/violator/statistics"),
+    getProfile: () => api.get("/violator/profile"),
 };
 
 export default api;
