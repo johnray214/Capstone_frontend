@@ -399,68 +399,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Quick Actions -->
-      <div class="quick-actions">
-        <h3>Quick Actions</h3>
-        <div class="actions-grid">
-          <div class="action-card">
-            <div class="action-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3h18l-9 15L3 3z"/>
-              </svg>
-            </div>
-            <div class="action-content">
-              <h4>Broadcast Notification</h4>
-              <p>Send notification to all users or specific groups</p>
-              <router-link to="/admin/notifications/broadcast" class="btn btn-primary btn-sm">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 3h18l-9 15L3 3z"/>
-                </svg>
-                Broadcast
-              </router-link>
-            </div>
-          </div>
-          
-          <div class="action-card">
-            <div class="action-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-              </svg>
-            </div>
-            <div class="action-content">
-              <h4>System Templates</h4>
-              <p>Manage notification templates and settings</p>
-              <router-link to="/admin/notifications/templates" class="btn btn-primary btn-sm">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                Manage Templates
-              </router-link>
-            </div>
-          </div>
-          
-          <div class="action-card">
-            <div class="action-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3v5h5m6-5a9 9 0 1 1-4.2 1.6"/>
-              </svg>
-            </div>
-            <div class="action-content">
-              <h4>Notification History</h4>
-              <p>View detailed logs and analytics</p>
-              <router-link to="/admin/notifications/history" class="btn btn-primary btn-sm">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                View History
-              </router-link>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </SidebarLayout>
 </template>
@@ -494,28 +432,39 @@ export default {
     })
     
     const loadNotifications = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    console.log('Fetching notifications...')
-    
-    const response = await adminAPI.getNotifications()
-    
-    if (response.data.status === 'success') {
-      const rawData = response.data.data
-      notifications.value = Array.isArray(rawData) ? rawData : []
-    } else {
-      error.value = response.data.message || 'Failed to load notifications'
-      console.error('API Error:', error.value)
+      try {
+        loading.value = true
+        error.value = null
+        console.log('Fetching notifications...')
+        
+        const response = await adminAPI.getNotifications()
+        console.log('API Response:', response)
+        
+        if (response.data && response.data.status === 'success') {
+          const rawData = response.data.data
+          console.log('Raw notifications data:', rawData)
+          notifications.value = Array.isArray(rawData) ? rawData : []
+          console.log('Processed notifications:', notifications.value)
+        } else {
+          error.value = response.data?.message || 'Failed to load notifications: Invalid response format'
+          console.error('API Error:', error.value, response)
+          notifications.value = []
+        }
+      } catch (err) {
+        console.error('Failed to load notifications:', err)
+        error.value = `Failed to load notifications: ${err.message || 'Unknown error'}`
+        notifications.value = []
+      } finally {
+        loading.value = false
+      }
+      
+      // Log the current state after loading
+      console.log('After loadNotifications:', {
+        notifications: notifications.value,
+        loading: loading.value,
+        error: error.value
+      })
     }
-  } catch (err) {
-    console.error('Failed to load notifications:', err)
-    error.value = 'Failed to load notifications. Please try again.'
-    notifications.value = []
-  } finally {
-    loading.value = false
-  }
-}
 
     // Computed properties for different views
 const sentNotifications = computed(() => {
@@ -531,17 +480,47 @@ const sentNotifications = computed(() => {
 
 const receivedNotifications = computed(() => {
   if (!currentUser.value) return []
-  return notifications.value.filter(n => {
-    // Notifications received by the current admin
-    return (
-      (n.target_id === currentUser.value.id && n.target_type === currentUser.value.role) ||
-      (n.target_type === 'Management' && !n.target_id)
-    )
+  
+  const filtered = notifications.value.filter(n => {
+    // Log for debugging
+    console.log('Notification:', {
+      id: n.id,
+      target_id: n.target_id,
+      target_type: n.target_type,
+      current_user_id: currentUser.value.id,
+      current_user_role: currentUser.value.role,
+      matches: {
+        target_id_match: n.target_id && n.target_id.toString() === currentUser.value.id.toString(),
+        target_type_match: n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase(),
+        is_management: n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+      }
+    })
+    
+    // Check if notification is for this specific admin
+    const isForThisAdmin = n.target_id !== null && 
+                         n.target_id !== undefined && 
+                         n.target_type && 
+                         n.target_id.toString() === currentUser.value.id.toString() && 
+                         n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+    
+    // Check if notification is for all management (target_type is 'Management' and target_id is null/empty)
+    const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+    
+    // Check if notification is for all admins (target_type is 'Admin' and target_id is null/empty)
+    const isForAllAdmins = n.target_type === 'Admin' && (n.target_id === null || n.target_id === '')
+    
+    return isForThisAdmin || isForAllManagement || isForAllAdmins
   })
+  
+  console.log('Filtered received notifications:', filtered)
+  return filtered
 })
 
 
-    const allNotifications = computed(() => notifications.value)
+    const allNotifications = computed(() => {
+      console.log('All notifications:', notifications.value)
+      return Array.isArray(notifications.value) ? notifications.value : []
+    })
 
     const filteredNotifications = computed(() => {
       let result = []
@@ -549,14 +528,22 @@ const receivedNotifications = computed(() => {
       // Get notifications based on active view
       switch (activeView.value) {
         case 'sent':
-          result = sentNotifications.value
+          result = [...sentNotifications.value]
           break
         case 'received':
-          result = receivedNotifications.value
+          result = [...receivedNotifications.value]
           break
         default:
-          result = allNotifications.value
+          result = [...allNotifications.value]
       }
+      
+      console.log('Before filtering:', { 
+        view: activeView.value, 
+        count: result.length,
+        receivedCount: receivedNotifications.value.length,
+        allCount: allNotifications.value.length,
+        items: [...result]
+      })
       
       // Apply type filter
       if (filters.value.type) {
@@ -581,12 +568,19 @@ const receivedNotifications = computed(() => {
       if (filters.value.search) {
         const search = filters.value.search.toLowerCase()
         result = result.filter(n => 
-          n.title.toLowerCase().includes(search) ||
-          n.message.toLowerCase().includes(search)
+          (n.title && n.title.toLowerCase().includes(search)) ||
+          (n.message && n.message.toLowerCase().includes(search))
         )
       }
       
-      return result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      const sorted = [...result].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      
+      console.log('After filtering and sorting:', {
+        count: sorted.length,
+        items: [...sorted]
+      })
+      
+      return sorted
     })
 
     const getCurrentNotifications = () => {

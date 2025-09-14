@@ -429,7 +429,7 @@ export default {
       
       switch(userRole) {
         case 'head':
-          allowedTargets = ['deputy', 'enforcer']
+          allowedTargets = ['deputy', 'admin','enforcer']
           break
         case 'deputy':
           allowedTargets = ['admin', 'enforcer']  
