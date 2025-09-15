@@ -506,8 +506,9 @@ const receivedNotifications = computed(() => {
     // Check if notification is for all management (target_type is 'Management' and target_id is null/empty)
     const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
     
-    // Check if notification is for all admins (target_type is 'Admin' and target_id is null/empty)
-    const isForAllAdmins = n.target_type === 'Admin' && (n.target_id === null || n.target_id === '')
+    const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') &&
+      (!n.target_id || n.target_id === null || n.target_id === '')
+
     
     return isForThisAdmin || isForAllManagement || isForAllAdmins
   })
