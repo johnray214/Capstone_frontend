@@ -431,25 +431,106 @@ export default {
       search: ''
     })
     
+    // Function to update notification statistics
+    const updateStats = () => {
+      if (!currentUser.value) return { sent: 0, received: 0, total: 0, unread: 0 }
+      
+      // Get all unique notifications
+      const all = [...new Set([
+        ...notifications.value
+      ])]
+      
+      // Count sent notifications
+      const sentCount = notifications.value.filter(n => {
+        if (!n) return false
+        return (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
+               (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
+               (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+      }).length
+      
+      // Count received notifications (excluding those sent by current user)
+      const receivedCount = notifications.value.filter(n => {
+        if (!n) return false
+        
+        // Exclude notifications sent by current user
+        const isSentByCurrentUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
+                                  (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
+                                  (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+        if (isSentByCurrentUser) return false
+        
+        // Check if notification is for this user
+        const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
+                            n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+        
+        // Check if notification is for all management
+        const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+        
+        // Check if notification is for all admins
+        const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
+                             (n.target_id === null || n.target_id === '')
+        
+        return isForThisUser || isForAllManagement || isForAllAdmins
+      }).length
+      
+      // Count unread notifications (excluding those sent by current user)
+      const unreadCount = notifications.value.filter(n => {
+        if (!n || n.read_at) return false
+        
+        // Only count unread notifications that are received by the user
+        const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
+                            n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+        
+        const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+        const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
+                             (n.target_id === null || n.target_id === '')
+        
+        return (isForThisUser || isForAllManagement || isForAllAdmins) && 
+               !(n.sender_id && n.sender_id.toString() === currentUser.value.id.toString())
+      }).length
+      
+      const stats = {
+        sent: sentCount,
+        received: receivedCount,
+        total: all.length,
+        unread: unreadCount
+      }
+      
+      console.log('Updated stats:', stats)
+      return stats
+    }
+
     const loadNotifications = async () => {
       try {
         loading.value = true
         error.value = null
-        console.log('Fetching notifications...')
+        console.log('Fetching all notifications...')
         
-        const response = await adminAPI.getNotifications()
-        console.log('API Response:', response)
+        // Always fetch all notifications regardless of the current view
+        const [receivedRes, sentRes, mgmtRes] = await Promise.all([
+          adminAPI.getNotifications(),
+          adminAPI.getSentNotifications(),
+          adminAPI.getAllNotifications()
+        ])
         
-        if (response.data && response.data.status === 'success') {
-          const rawData = response.data.data
-          console.log('Raw notifications data:', rawData)
-          notifications.value = Array.isArray(rawData) ? rawData : []
-          console.log('Processed notifications:', notifications.value)
-        } else {
-          error.value = response.data?.message || 'Failed to load notifications: Invalid response format'
-          console.error('API Error:', error.value, response)
-          notifications.value = []
-        }
+        const received = Array.isArray(receivedRes.data?.data) ? receivedRes.data.data : []
+        const sent = Array.isArray(sentRes.data?.data) ? sentRes.data.data : []
+        const mgmt = Array.isArray(mgmtRes.data?.data) ? mgmtRes.data.data : []
+        
+        // De-duplicate by id and combine all notifications
+        const map = new Map()
+        ;[...received, ...sent, ...mgmt].forEach(n => { 
+          if (n && n.id != null) map.set(n.id, n) 
+        })
+        
+        const allNotifications = Array.from(map.values())
+        console.log('All notifications loaded:', allNotifications)
+        
+        notifications.value = allNotifications
+        console.log('Notifications set to state:', notifications.value)
+        
+        // Update stats after loading
+        updateStats()
+        
       } catch (err) {
         console.error('Failed to load notifications:', err)
         error.value = `Failed to load notifications: ${err.message || 'Unknown error'}`
@@ -467,59 +548,55 @@ export default {
     }
 
     // Computed properties for different views
-const sentNotifications = computed(() => {
-  if (!currentUser.value) return []
-  
-  return notifications.value.filter(n => {
-    const isSenderMatch = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
-    const isRoleMatch = n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
-    
-    return isSenderMatch && isRoleMatch
-  })
-})
-
-const receivedNotifications = computed(() => {
-  if (!currentUser.value) return []
-  
-  const filtered = notifications.value.filter(n => {
-    // Log for debugging
-    console.log('Notification:', {
-      id: n.id,
-      target_id: n.target_id,
-      target_type: n.target_type,
-      current_user_id: currentUser.value.id,
-      current_user_role: currentUser.value.role,
-      matches: {
-        target_id_match: n.target_id && n.target_id.toString() === currentUser.value.id.toString(),
-        target_type_match: n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase(),
-        is_management: n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
-      }
+    const sentNotifications = computed(() => {
+      if (!currentUser.value) return []
+      
+      return notifications.value.filter(n => {
+        if (!n) return false
+        
+        // Check if the notification has a sender_id that matches the current user's ID
+        const isSenderMatch = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
+        
+        // Check if the notification was sent by the current user's role (for system-generated notifications)
+        const isRoleMatch = n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+        
+        // Also include notifications where the current user is the sender based on the 'sent_by' field if it exists
+        const isSentByUser = n.sent_by && n.sent_by.toString() === currentUser.value.id.toString()
+        
+        return isSenderMatch || isRoleMatch || isSentByUser
+      })
     })
-    
-    // Check if notification is for this specific admin
-    const isForThisAdmin = n.target_id !== null && 
-                         n.target_id !== undefined && 
-                         n.target_type && 
-                         n.target_id.toString() === currentUser.value.id.toString() && 
-                         n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
-    
-    // Check if notification is for all management (target_type is 'Management' and target_id is null/empty)
-    const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
-    
-    const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') &&
-      (!n.target_id || n.target_id === null || n.target_id === '')
 
-    
-    return isForThisAdmin || isForAllManagement || isForAllAdmins
-  })
-  
-  console.log('Filtered received notifications:', filtered)
-  return filtered
-})
-
+    const receivedNotifications = computed(() => {
+      if (!currentUser.value) return []
+      
+      const filtered = notifications.value.filter(n => {
+        if (!n) return false
+        
+        // Check if notification is for this specific admin
+        const isForThisAdmin = n.target_id != null && 
+                             n.target_type && 
+                             n.target_id.toString() === currentUser.value.id.toString() && 
+                             n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+        
+        // Check if notification is for all management (target_type is 'Management' and target_id is null/empty)
+        const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+        
+        // Check if notification is for all admins (target_type is 'Admin' and target_id is null/empty)
+        const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
+                             (n.target_id === null || n.target_id === '')
+        
+        // Exclude notifications that were sent by the current user
+        const isSentByCurrentUser = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
+        
+        return (isForThisAdmin || isForAllManagement || isForAllAdmins) && !isSentByCurrentUser
+      })
+      
+      console.log('Filtered received notifications:', filtered)
+      return filtered
+    })
 
     const allNotifications = computed(() => {
-      console.log('All notifications:', notifications.value)
       return Array.isArray(notifications.value) ? notifications.value : []
     })
 
@@ -529,13 +606,60 @@ const receivedNotifications = computed(() => {
       // Get notifications based on active view
       switch (activeView.value) {
         case 'sent':
-          result = [...sentNotifications.value]
+          // Only show sent notifications
+          result = notifications.value.filter(n => {
+            if (!n || !currentUser.value) return false
+            const isSentByUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
+                               (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
+                               (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+            return isSentByUser
+          })
           break
+          
         case 'received':
-          result = [...receivedNotifications.value]
+          // Only show received notifications that weren't sent by the current user
+          result = notifications.value.filter(n => {
+            if (!n || !currentUser.value) return false
+            
+            // Check if sent by current user (exclude these)
+            const isSentByCurrentUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
+                                     (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
+                                     (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+            
+            if (isSentByCurrentUser) return false
+            
+            // Check if notification is for this user
+            const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
+                                n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+            
+            // Check if notification is for all management
+            const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
+            
+            // Check if notification is for all admins
+            const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
+                                 (n.target_id === null || n.target_id === '')
+            
+            return isForThisUser || isForAllManagement || isForAllAdmins
+          })
           break
+          
         default:
-          result = [...allNotifications.value]
+          // For 'all' view, show notifications that aren't specifically sent by or received by the current user
+          result = notifications.value.filter(n => {
+            if (!n || !currentUser.value) return false
+            
+            // Check if sent by current user
+            const isSentByCurrentUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
+                                     (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
+                                     (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+            
+            // Check if specifically received by current user
+            const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
+                                n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
+            
+            // Only include if not specifically sent by or received by the current user
+            return !isSentByCurrentUser && !isForThisUser
+          })
       }
       
       console.log('Before filtering:', { 
@@ -718,14 +842,14 @@ const receivedNotifications = computed(() => {
       }
     }
 
-    const viewViolator = (violatorId) => {
+    const viewViolator = () => {
       // Navigate to violator details
-      window.location.href = `/admin/violators/${violatorId}`
+      window.location.href = `/admin/violators`
     }
 
-    const viewTransaction = (transactionId) => {
+    const viewTransaction = () => {
       // Navigate to transaction details
-      window.location.href = `/admin/transactions/${transactionId}`
+      window.location.href = `/admin/transactions`
     }
 
     const showNotificationMenu = (notification) => {
@@ -763,6 +887,7 @@ const receivedNotifications = computed(() => {
     onMounted(() => {
       // Initialize auth store to get current user
       authStore.initAuth()
+      // Load notifications only once when component mounts
       loadNotifications()
     })
     

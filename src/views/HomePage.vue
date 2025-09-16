@@ -5,7 +5,7 @@
       <div class="nav-container">
         <div class="nav-left">
           <div class="logo">
-            <img src="@/assets/posu_logo.jpg" alt="POSU Echague" class="logo-img" />
+            <img src="@/assets/posu_logo.png" alt="POSU Echague" class="logo-img" />
             <span class="logo-text">POSU Echague</span>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default {
 }
 
 .logo-img {
-  width: 80px;
+  width: 70px;
   height: 70px;
   border-radius: 8px;
 }

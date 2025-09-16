@@ -22,6 +22,7 @@ export const useNotificationsStore = () => {
         id: n.id,
         title: n.title,
         message: n.message,
+        type: n.type || 'info',
         read_at: n.read_at,
         created_at: n.created_at,
         read: !!n.read_at,
@@ -41,11 +42,20 @@ export const useNotificationsStore = () => {
     }
   }
 
-  const markAllAsRead = () => {
-    state.notifications.forEach(n => {
-      n.read = true
-      n.read_at = new Date().toISOString()
-    })
+  const markAllAsRead = async (role) => {
+    try {
+      if (['Head', 'Deputy', 'Admin'].includes(role)) {
+        await adminAPI.markAllNotificationsAsRead()
+      } else if (role === 'Violator') {
+        await violatorAPI.markAllNotificationsAsRead()
+      }
+      state.notifications.forEach(n => {
+        n.read = true
+        n.read_at = new Date().toISOString()
+      })
+    } catch (err) {
+      console.error('Mark all as read failed:', err)
+    }
   }
 
   const unreadCount = () => state.notifications.filter(n => !n.read).length

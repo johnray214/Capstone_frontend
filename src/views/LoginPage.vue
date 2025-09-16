@@ -2,56 +2,64 @@
   <div class="login-page">
     <div class="login-container">
       <div class="login-card">
-        <div class="login-header">
-          <div class="logo">
-            <span class="logo-text">POSU Echague</span>
-          </div>
-          <h1>Welcome Back</h1>
-          <p>Sign in to your account to continue</p>
+        <div class="logo-container">
+          <img src="@/assets/posu_logo.png" alt="POSU Logo" class="logo" />
+          <h1>POSU Traffic Violation System</h1>
         </div>
+        
+        <div class="login-form">
+          <h2>Welcome Back</h2>
+          <p class="subtitle">Sign in to your account to continue</p>
 
-        <form @submit.prevent="handleLogin" class="login-form">
-          <div v-if="error" class="alert alert-error">
-            {{ error }}
-          </div>
-
-          <div class="form-group">
-            <label for="identifier" class="form-label">Email or Mobile Number</label>
-            <input
-              id="identifier"
-              v-model="form.identifier"
-              type="text"
-              class="form-input"
-              placeholder="Enter your email or mobile number"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <div class="password-header">
-              <label for="password" class="form-label">Password</label>
-              <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
+          <form @submit.prevent="handleLogin">
+            <div v-if="error" class="alert alert-error">
+              {{ error }}
             </div>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              class="form-input"
-              placeholder="Enter your password"
-              required
-            />
+
+            <div class="form-group">
+              <label for="identifier" class="form-label">Email or Mobile Number</label>
+              <input
+                id="identifier"
+                v-model="form.identifier"
+                type="text"
+                class="form-input"
+                placeholder="Enter your email or mobile number"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <div class="password-header">
+                <label for="password" class="form-label">Password</label>
+                <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
+              </div>
+              <div class="password-input">
+                <input
+                  id="password"
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button type="button" class="toggle-password" @click="togglePasswordVisibility">
+                  <span v-if="showPassword">🙈</span>
+                  <span v-else>👁️</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
+              <span v-if="loading" class="spinner-small"></span>
+              {{ loading ? 'Signing in...' : 'Sign In' }}
+            </button>
+          </form>
+
+          <div class="login-footer">
+            <p>Don't have an account? 
+              <router-link to="/register" class="link">Sign up here</router-link>
+            </p>
           </div>
-
-          <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
-            <span v-if="loading" class="spinner-small"></span>
-            {{ loading ? 'Signing in...' : 'Sign In' }}
-          </button>
-        </form>
-
-        <div class="login-footer">
-          <p>Don't have an account? 
-            <router-link to="/register" class="link">Sign up here</router-link>
-          </p>
         </div>
       </div>
     </div>
@@ -73,6 +81,12 @@ export default {
       identifier: '',
       password: ''
     })
+    
+    const showPassword = ref(false)
+    
+    const togglePasswordVisibility = () => {
+      showPassword.value = !showPassword.value
+    }
 
     const error = ref('')
     const loading = ref(false)
@@ -118,7 +132,9 @@ export default {
       form,
       error,
       loading,
-      handleLogin
+      handleLogin,
+      showPassword,
+      togglePasswordVisibility
     }
   }
 }
@@ -162,9 +178,47 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-.login-header {
+.logo-container {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white;
+  padding: 30px;
   text-align: center;
-  margin-bottom: 32px;
+  margin: -40px -40px 30px -40px;
+  border-radius: 16px 16px 0 0;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 15px;
+  border-radius: 50%;
+  background: #0d55c8;
+  border: 3px solid white;
+  padding: 5px;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+h2 {
+  color: #1f2937;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-top: 0;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .form-group {
@@ -189,6 +243,48 @@ export default {
 .forgot-password:hover {
   color: #2563eb;
   text-decoration: underline;
+}
+
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.toggle-password:hover {
+  color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.toggle-password:focus {
+  outline: none;
+  color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Ensure the password input has enough padding for the eye icon */
+.form-input[type="password"],
+.form-input[type="text"] {
+  padding-right: 44px;
 }
 
 .logo {

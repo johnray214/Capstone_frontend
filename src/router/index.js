@@ -15,6 +15,7 @@ import OfficialsPage from "@/views/admin/ManageUsers/OfficialsPage.vue";
 import ViolatorsPage from "@/views/admin/ManageUsers/ViolatorsPage.vue";
 import AdminViolations from "../views/admin/AdminViolations.vue";
 import AdminReports from "../views/admin/AdminReports.vue";
+import AdminAuditLogs from "../views/admin/AdminAuditLogs.vue";
 import AdminTransactions from "@/views/admin/AdminTransactions.vue";
 import AdminNotifications from "../views/admin/Notifications/AdminNotifications.vue";
 import AdminSendNotifications from "../views/admin/Notifications/AdminSendNotifications.vue"
@@ -127,6 +128,12 @@ const routes = [
         component: AdminReports,
         meta: { requiresAuth: true, role: ["Admin", "Deputy", "Head"] },
     },
+    {
+        path: "/admin/logs",
+        name: "admin-logs",
+        component: AdminAuditLogs,
+        meta: { requiresAuth: true, role: ["Admin", "Deputy", "Head"] },
+    },
 
     {
         path: "/admin/notifications",
@@ -219,7 +226,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory('/'),
+    history: createWebHistory(process.env.BASE_URL),
     routes,
 });
 

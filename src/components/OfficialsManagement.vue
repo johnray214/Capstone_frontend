@@ -100,7 +100,7 @@
                       <div class="user-avatar">
                         <img 
                         v-if="user.image" 
-                        :src="`http://127.0.0.1:8000${user.image}`" 
+                        :src="`http://127.0.0.1:8000/storage/profile_images/${user.image}`" 
                         alt="avatar" 
                         class="avatar-img"
                       />

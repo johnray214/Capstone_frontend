@@ -156,6 +156,17 @@
             <span class="nav-text" v-if="!sidebarCollapsed">Notifications</span>
           </router-link>
           <router-link 
+            to="/admin/logs" 
+            class="nav-item"
+            :class="{ active: $route.path === '/admin/logs' }"
+          >
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span class="nav-text" v-if="!sidebarCollapsed">Audit Logs</span>
+          </router-link>
+          <router-link 
             to="/admin/archives" 
             class="nav-item"
             :class="{ active: $route.path === '/admin/archives' }"
@@ -296,7 +307,7 @@
                   <h3>Notifications</h3>
                 </div>
                 <div class="notifications-header-actions">
-                  <button @click="notificationsStore.markAllAsRead" class="mark-all-read">
+                  <button @click="notificationsStore.markAllAsRead(userRole)" class="mark-all-read">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M20 6L9 17l-5-5"/>
                     </svg>
@@ -321,26 +332,19 @@
                   v-for="n in notificationsStore.state.notifications.slice(0, 5)" 
                   :key="n.id"
                   class="notification-item"
-                  :class="{ 'unread': !n.read }"
+                  :class="[ { 'unread': !n.read }, `type-${n.type || 'info'}` ]"
                 >
-                  <div class="notification-icon-wrapper">
-                    <svg class="notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="16" x2="12" y2="12"/>
-                      <line x1="12" y1="8" x2="12.01" y2="8"/>
-                    </svg>
-                    <div v-if="!n.read" class="unread-dot"></div>
+                  <div class="notification-left">
+                    <span class="notification-type-badge" :class="`type-${n.type || 'info'}`">{{ (n.type || 'info').toUpperCase() }}</span>
                   </div>
                   <div class="notification-content">
                     <h4>{{ n.title }}</h4>
                     <p>{{ n.message }}</p>
                     <span class="notification-time">{{ formatTime(n.created_at) }}</span>
                   </div>
-                  <button v-if="n.read" @click="notificationsStore.markAsRead(n.id)" class="mark-read-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="20,6 9,17 4,12"/>
-                    </svg>
-                  </button>
+                  <div class="notification-status-mini">
+                    <div v-if="!n.read" class="unread-dot"></div>
+                  </div>
                 </div>
               </div>
 
@@ -473,8 +477,6 @@ export default {
 
     const getNotificationsRoute = () => {
       const roleRoutes = {
-        'Head': '/admin/notifications/view',
-        'Deputy': '/admin/notifications/view',
         'Admin': '/admin/notifications/view',
         'Violator': '/violator/notifications'
       }
@@ -567,7 +569,7 @@ const manageRoles = computed(() => {
     }
 
     onMounted(() => {
-      if (state.user) {
+     if (state.user) {
         notificationsStore.fetch(state.user.role)
       }
       document.addEventListener('click', handleClickOutside)
@@ -943,10 +945,12 @@ const manageRoles = computed(() => {
 .notification-item {
   padding: 16px 24px;
   border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
   gap: 12px;
   transition: background-color 0.2s ease;
+  position: relative;
 }
 
 .notification-item:hover {
@@ -961,24 +965,46 @@ const manageRoles = computed(() => {
   border-bottom: none;
 }
 
-.notification-icon-wrapper {
-  position: relative;
-  flex-shrink: 0;
+.notification-left {
+  display: flex;
+  align-items: center;
 }
 
-.notification-icon {
-  width: 16px;
-  height: 16px;
-  color: #6b7280;
-  padding: 8px;
-  background: #f3f4f6;
-  border-radius: 50%;
+.notification-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #e5e7eb;
+  color: #374151;
 }
 
-.unread-dot {
+.notification-item::before {
+  content: '';
   position: absolute;
-  top: 6px;
-  right: 6px;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+}
+
+.notification-item.type-info::before { background: #10b981; }
+.notification-item.type-alert::before { background: #ef4444; }
+.notification-item.type-warning::before { background: #f59e0b; }
+.notification-item.type-system::before { background: #8b5cf6; }
+
+.notification-type-badge.type-info { background: #d1fae5; color: #065f46; }
+.notification-type-badge.type-alert { background: #fee2e2; color: #991b1b; }
+.notification-type-badge.type-warning { background: #fef3c7; color: #92400e; }
+.notification-type-badge.type-system { background: #ede9fe; color: #6b21a8; }
+
+.notification-status-mini .unread-dot {
+  position: absolute;
+  top: 12px;
+  right: 16px;
   width: 8px;
   height: 8px;
   background: #3b82f6;

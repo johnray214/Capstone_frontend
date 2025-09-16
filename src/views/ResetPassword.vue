@@ -2,7 +2,7 @@
   <div class="reset-password-page">
     <div class="reset-password-container">
       <div class="logo-container">
-        <img src="@/assets/posu_logo.jpg" alt="POSU Logo" class="logo" />
+        <img src="@/assets/posu_logo.png" alt="POSU Logo" class="logo" />
         <h1>POSU Traffic Violation System</h1>
       </div>
       
@@ -61,9 +61,9 @@
             <p class="error-message" v-if="errors.confirmPassword">{{ errors.confirmPassword }}</p>
           </div>
           
-          <button type="submit" class="btn-primary" :disabled="isLoading">
-            <span v-if="!isLoading">Reset Password</span>
-            <span v-else>Resetting Password...</span>
+          <button type="submit" class="btn btn-primary btn-full" :disabled="isLoading">
+            <span v-if="isLoading" class="spinner-small"></span>
+            {{ isLoading ? 'Resetting Password...' : 'Reset Password' }}
           </button>
           
           <div class="back-to-login">
@@ -487,5 +487,22 @@ input.error {
 
 .success-message .btn-primary {
   margin-top: 15px;
+}
+
+/* Spinner Styles */
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

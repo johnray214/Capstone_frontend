@@ -2,22 +2,23 @@
   <div class="register-page">
     <div class="register-container">
       <div class="register-card">
-        <div class="register-header">
-          <div class="logo">
-            <span class="logo-text">POSU Echague</span>
-          </div>
-          <h1>Create Account</h1>
-          <p>Register using your Email or Mobile Number</p>
+        <div class="logo-container">
+          <img src="@/assets/posu_logo.png" alt="POSU Logo" class="logo" />
+          <h1>POSU Traffic Violation System</h1>
         </div>
+        
+        <div class="register-form">
+          <h2>Create Account</h2>
+          <p class="subtitle">Register using your Email or Mobile Number</p>
 
-        <form @submit.prevent="handleRegister" class="register-form">
-          <div v-if="error" class="alert alert-error">
-            {{ error }}
-          </div>
+          <form @submit.prevent="handleRegister">
+            <div v-if="error" class="alert alert-error">
+              {{ error }}
+            </div>
 
-          <div v-if="success" class="alert alert-success">
-            {{ success }}
-          </div>
+            <div v-if="success" class="alert alert-success">
+              {{ success }}
+            </div>
 
           <!-- Identifier (Email or Mobile) -->
           <div class="form-group">
@@ -83,12 +84,13 @@
             <span v-if="loading" class="spinner-small"></span>
             {{ loading ? 'Creating Account...' : 'Create Account' }}
           </button>
-        </form>
+          </form>
 
-        <div class="register-footer">
-          <p>Already have an account? 
-            <router-link to="/login" class="link">Sign in here</router-link>
-          </p>
+          <div class="register-footer">
+            <p>Already have an account? 
+              <router-link to="/login" class="link">Sign in here</router-link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -228,22 +230,47 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-.register-header {
+.logo-container {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white;
+  padding: 30px;
   text-align: center;
-  margin-bottom: 32px;
+  margin: -40px -40px 30px -40px;
+  border-radius: 16px 16px 0 0;
 }
 
 .logo {
-  margin-bottom: 24px;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 15px;
+  border-radius: 50%;
+  background: #0d55c8;
+  border: 3px solid white;
+  padding: 5px;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
 }
 
-.logo-text {
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+h2 {
+  color: #1f2937;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-top: 0;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .register-header h1 {

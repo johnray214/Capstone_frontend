@@ -3,11 +3,11 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-   baseURL: 'https://capstonebackend-production-ed22.up.railway.app/api',
-   timeout: 60000,
-   headers: {
-      Accept: 'application/json',
-   },
+    baseURL: "http://127.0.0.1:8000/api",
+    timeout: 60000,
+    headers: {
+        Accept: "application/json",
+    },
 });
 
 // Request interceptor → attach token
@@ -52,71 +52,80 @@ export const authAPI = {
    ADMIN API
 ============================ */
 export const adminAPI = {
-   // Dashboard
-   dashboard: (params) => api.get('/admin/dashboard', { params }),
+    // Dashboard
+    dashboard: (params) => api.get("/admin/dashboard", {params}),
 
-   // Officials Management
-   getUsers: (role = '') =>
-      api.get(`/admin/users${role ? `?role=${role}` : ''}`),
-   createUser: (data) => api.post('/admin/users', data),
-   updateUser: (userType, id, data) =>
-      api.put(`/admin/users/${userType}/${id}`, data),
-   changeUserStatus: (payload) => api.post(`/admin/toggle-status`, payload),
+    // Officials Management
+    getUsers: (role = "") =>
+        api.get(`/admin/users${role ? `?role=${role}` : ""}`),
+    createUser: (data) => api.post("/admin/users", data),
+    updateUser: (userType, id, data) =>
+        api.put(`/admin/users/${userType}/${id}`, data),
+    changeUserStatus: (payload) => api.post(`/admin/toggle-status`, payload),
 
-   // Archive
-   archiveUser: (userType, id) => api.delete(`/admin/users/${userType}/${id}`),
-   getArchivedUsers: (params) => api.get('/admin/users/archived', { params }),
-   restoreUser: (userType, id) =>
-      api.post(`/admin/users/${userType}/${id}/restore`),
+    // Archive
+    archiveUser: (userType, id) => api.delete(`/admin/users/${userType}/${id}`),
+    getArchivedUsers: (params) => api.get("/admin/users/archived", { params }),
+    restoreUser: (userType, id) =>
+        api.post(`/admin/users/${userType}/${id}/restore`),
 
-   //Transactions
-   getTransactions: (params) => api.get('/admin/transactions', { params }),
-   updateTransaction: (id, payload) =>
-      api.put(`/admin/transactions/${id}/update`, payload),
+    //Transactions
+    getTransactions: (params) => api.get("/admin/transactions", { params }),
+    updateTransaction: (id, payload) =>
+        api.put(`/admin/transactions/${id}/update`, payload),
 
-   // Violation Management
-   getViolations: (status = '') =>
-      api.get(`/admin/violations${status ? `?status=${status}` : ''}`),
-   createViolation: (data) => api.post('/admin/violations', data),
-   updateViolation: (id, data) => api.put(`/admin/violations/${id}`, data),
-   getViolation: (id) => api.get(`/admin/violation/${id}`),
+    // Violation Management
+    getViolations: (status = "") =>
+        api.get(`/admin/violations${status ? `?status=${status}` : ""}`),
+    createViolation: (data) => api.post("/admin/violations", data),
+    updateViolation: (id, data) => api.put(`/admin/violations/${id}`, data),
+    getViolation: (id) => api.get(`/admin/violation/${id}`),
 
-   // Vehicles Management
-   getVehicles: (params = {}) => api.get('/admin/vehicles', { params }),
-   getVehiclesDetails: (id) => api.get(`/admin/vehicles/${id}`),
-   updateVehicle: (id, data) => api.put(`/admin/vehicles/${id}`, data),
+    // Vehicles Management
+    getVehicles: (params = {}) => api.get("/admin/vehicles", { params }),
+    getVehiclesDetails: (id) => api.get(`/admin/vehicles/${id}`),
+    updateVehicle: (id, data) => api.put(`/admin/vehicles/${id}`, data),
 
-   // Violator Management
-   getViolators: (params = {}) => api.get('/admin/violators', { params }),
-   getViolatorDetails: (id) => api.get(`/admin/violators/${id}`),
-   updateViolator: (data) => api.put('/admin/update-violator', data),
-   archiveViolator: (id) => api.delete(`/admin/violators/${id}`),
-   getArchivedViolators: () => api.get('/admin/violators/archived'),
-   restoreViolator: (id) => api.post(`/admin/violators/${id}/restore`),
-   forceDeleteViolator: (id) =>
-      api.delete(`/admin/violators/${id}/force-delete`),
+    // Violator Management
+    getViolators: (params = {}) => api.get("/admin/violators", { params }),
+    getViolatorDetails: (id) => api.get(`/admin/violators/${id}`),
+    updateViolator: (data) => api.put("/admin/update-violator", data),
+    archiveViolator: (id) => api.delete(`/admin/violators/${id}`),
+    getArchivedViolators: () => api.get("/admin/violators/archived"),
+    restoreViolator: (id) => api.post(`/admin/violators/${id}/restore`),
+    forceDeleteViolator: (id) =>
+        api.delete(`/admin/violators/${id}/force-delete`),
 
-   // Reports & Analytics
-   generateReport: (params = {}) => api.post(`/admin/generate-report/`, params),
-   getReportHistory: () => api.get('/admin/history'),
-   downloadReportFile: (filename) =>
-      api.get(`/admin/download-report/${filename}`, {
-         responseType: 'blob',
-      }),
+    // Reports & Analytics
+    generateReport: (params = {}) =>
+        api.post(`/admin/generate-report/`, params),
+    getReportHistory: () => api.get("/admin/history"),
+    downloadReportFile: (filename) =>
+        api.get(`/admin/download-report/${filename}`, {
+            responseType: "blob",
+        }),
 
-   // Notifications
-   getNotifications: () => api.get('/admin/notifications'),
-   getSentNotifications: () => api.get('/admin/notifications/sent'),
-   markNotificationAsRead: (id) => api.post(`/admin/notifications/${id}/read`),
-   markNotificationAsUnread: (id) =>
-      api.post(`/admin/notifications/${id}/unread`),
-   markAllNotificationsAsRead: () =>
-      api.post('/admin/notifications/mark-all-read'),
-   sendNotification: (data) => api.post('/admin/send-notifications', data),
-   getAllUsers: () => api.get('/admin/get-users'),
+    // Notifications
+    // Received notifications
+    getNotifications: () => api.get("/admin/notifications"),
+    // Management-wide notifications
+    getAllNotifications: () => api.get("/admin/notifications/all"),
+    // Sent by current user
+    getSentNotifications: () => api.get("/admin/notifications/sent"),
+    markNotificationAsRead: (id) => api.post(`/admin/notifications/${id}/read`),
+    markNotificationAsUnread: (id) =>
+        api.post(`/admin/notifications/${id}/unread`),
+    markAllNotificationsAsRead: () =>
+        api.post("/admin/notifications/mark-all-read"),
+    sendNotification: (data) => api.post("/admin/send-notifications", data),
+    
+    getAllUsers: () => api.get("/admin/get-users"),
 
-   // Dashboard Stats
-   getDashboardStats: () => api.get('/admin/dashboard/stats'),
+    // Dashboard Stats
+    getDashboardStats: () => api.get("/admin/dashboard/stats"),
+
+    // Audit Logs
+    getAuditLogs: (params = {}) => api.get('/admin/logs', { params }),
 };
 
 /* ============================
