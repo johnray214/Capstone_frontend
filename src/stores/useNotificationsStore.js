@@ -49,10 +49,13 @@ export const useNotificationsStore = () => {
       } else if (role === 'Violator') {
         await violatorAPI.markAllNotificationsAsRead()
       }
+      // Optimistic update
       state.notifications.forEach(n => {
         n.read = true
         n.read_at = new Date().toISOString()
       })
+      // Ensure consistency with server
+      await fetch(role)
     } catch (err) {
       console.error('Mark all as read failed:', err)
     }

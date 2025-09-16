@@ -106,11 +106,8 @@ export const adminAPI = {
         }),
 
     // Notifications
-    // Received notifications
     getNotifications: () => api.get("/admin/notifications"),
-    // Management-wide notifications
     getAllNotifications: () => api.get("/admin/notifications/all"),
-    // Sent by current user
     getSentNotifications: () => api.get("/admin/notifications/sent"),
     markNotificationAsRead: (id) => api.post(`/admin/notifications/${id}/read`),
     markNotificationAsUnread: (id) =>
@@ -120,9 +117,6 @@ export const adminAPI = {
     sendNotification: (data) => api.post("/admin/send-notifications", data),
     
     getAllUsers: () => api.get("/admin/get-users"),
-
-    // Dashboard Stats
-    getDashboardStats: () => api.get("/admin/dashboard/stats"),
 
     // Audit Logs
     getAuditLogs: (params = {}) => api.get('/admin/logs', { params }),

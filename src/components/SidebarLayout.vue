@@ -919,6 +919,12 @@ const manageRoles = computed(() => {
   overflow-y: auto;
 }
 
+.notifications-list::after {
+  content: '';
+  display: block;
+  height: 6px;
+}
+
 .no-notifications {
   padding: 40px 24px;
   text-align: center;
@@ -943,8 +949,8 @@ const manageRoles = computed(() => {
 }
 
 .notification-item {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e5e7eb;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: start;
