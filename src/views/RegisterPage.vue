@@ -16,9 +16,7 @@
               {{ error }}
             </div>
 
-            <div v-if="success" class="alert alert-success">
-              {{ success }}
-            </div>
+            <!-- Success will be shown on Login page after redirect -->
 
           <!-- Identifier (Email or Mobile) -->
           <div class="form-group">
@@ -164,9 +162,8 @@ export default {
         const result = await register(form.value)
 
         if (result.success) {
-          success.value = 'Account created successfully! You can now sign in.'
           form.value = { identifier: '', password: '', password_confirmation: '' }
-          setTimeout(() => router.push('/login'), 2000)
+          router.push({ path: '/login', query: { registered: '1' } })
         } else {
           error.value = result.message
         }

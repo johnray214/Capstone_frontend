@@ -11,7 +11,7 @@
           </div>
           <div class="profile-info">
             <h2>{{ fullName }}</h2>
-            <p class="enforcer">Enforcer</p>
+            <p class="enforcer">{{ roleLabel }}</p>
           </div>
           <div class="profile-actions">
             <button @click="editMode = !editMode" class="btn btn-primary">
@@ -64,6 +64,32 @@
                 <span v-if="errors.last_name" class="error-message">{{ errors.last_name[0] }}</span>
               </div>
   
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input
+                  id="email"
+                  type="email"
+                  v-model="formData.email"
+                  :disabled="!editMode"
+                  class="form-input"
+                  :class="{ error: errors.email }"
+                >
+                <span v-if="errors.email" class="error-message">{{ errors.email[0] }}</span>
+              </div>
+
+              <div class="form-group">
+                <label for="office">Office</label>
+                <input
+                  id="office"
+                  type="text"
+                  v-model="formData.office"
+                  :disabled="!editMode"
+                  class="form-input"
+                  :class="{ error: errors.office }"
+                >
+                <span v-if="errors.office" class="error-message">{{ errors.office[0] }}</span>
+              </div>
+
               <div class="form-group full-width" v-if="editMode">
                 <label for="image">Profile Image</label>
                 <input
@@ -164,22 +190,23 @@
   <script>
   import { ref, computed, onMounted } from 'vue'
   import SidebarLayout from '@/components/SidebarLayout.vue'
-  import { enforcerAPI, authAPI } from '@/services/api'
+  import { adminAPI } from '@/services/api'
   import { useAuthStore } from '@/stores/auth'
   import Swal from 'sweetalert2'
   
   export default {
-    name: 'EnforcerProfile',
+    name: 'AdminProfile',
     components: {
       SidebarLayout
     },
     setup() {
-      const { state } = useAuthStore()
+      const { state, setProfileImageUrl } = useAuthStore()
       const editMode = ref(false)
       const saving = ref(false)
       const changingPassword = ref(false)
       const performanceStats = ref({})
       const recentActivity = ref([])
+      const userType = ref('Admin')
       const selectedFile = ref(null)
       const imagePreview = ref(null)
       const profileImage = ref(null)
@@ -187,7 +214,9 @@
       const formData = ref({
         first_name: '',
         middle_name: '',
-        last_name: ''
+        last_name: '',
+        email: '',
+        office: ''
       })
   
       const passwordData = ref({
@@ -208,11 +237,13 @@
       })
       
       const userInitials = computed(() => {
-        if (!user.value) return 'E'
+        if (!user.value) return 'A'
         const first = user.value.first_name?.charAt(0) || ''
         const last = user.value.last_name?.charAt(0) || ''
         return `${first}${last}`.toUpperCase()
       })
+
+      const roleLabel = computed(() => userType.value)
       
       const onFileSelected = (event) => {
         const file = event.target.files[0]
@@ -250,29 +281,44 @@
       
       const loadProfileData = async () => {
   try {
-    const response = await authAPI.profile()
+    const response = await adminAPI.profile()
 
     if (response.data.success) {
       const data = response.data.data
-      const profileUser = data.user || {}
+      const type = (data.user_type || '').toString()
+      userType.value = type || 'Admin'
+      const key = (type || '').toLowerCase()
+      const profileUser = key ? (data[key] || {}) : {}
 
       formData.value = {
         first_name: profileUser.first_name || '',
         middle_name: profileUser.middle_name || '',
-        last_name: profileUser.last_name || ''
+        last_name: profileUser.last_name || '',
+        email: profileUser.email || '',
+        office: profileUser.office || ''
       }
 
       if (profileUser.image) {
-        profileImage.value = `http://127.0.0.1:8000/storage/${profileUser.image}`;
+        profileImage.value = profileUser.image.startsWith('http')
+          ? profileUser.image
+          : `https://capstonebackend-production-ed22.up.railway.app/storage/${profileUser.image}`
+        setProfileImageUrl(profileUser.image)
       } else {
         profileImage.value = null;
+        setProfileImageUrl(null)
       }
 
       performanceStats.value = data.performance_stats || {}
 
-      // Update store so computed fullName reacts
+      // Update store so computed fullName reacts while preserving role and other fields
       if (profileUser) {
-        state.user = profileUser
+        const existing = state.user || {}
+        const roleFromApi = data.user_type || existing.role
+        state.user = {
+          ...existing,
+          ...profileUser,
+          role: roleFromApi || existing.role
+        }
       }
     }
   } catch (error) {
@@ -294,15 +340,31 @@
           errors.value = {}
           
           const formDataToSend = new FormData()
-          formDataToSend.append('first_name', formData.value.first_name || '')
+          // Only send fields that actually changed to avoid forcing inputs
+          const currentUser = user.value || {}
+          if (formData.value.first_name && formData.value.first_name !== currentUser.first_name) {
+            formDataToSend.append('first_name', formData.value.first_name)
+          }
+          if (formData.value.middle_name !== undefined && formData.value.middle_name !== currentUser.middle_name) {
           formDataToSend.append('middle_name', formData.value.middle_name || '')
-          formDataToSend.append('last_name', formData.value.last_name || '')
+          }
+          if (formData.value.last_name && formData.value.last_name !== currentUser.last_name) {
+            formDataToSend.append('last_name', formData.value.last_name)
+          }
           
           if (selectedFile.value) {
   formDataToSend.append('image', selectedFile.value)
 }
+          if (formData.value.email && formData.value.email !== currentUser.email) {
+            formDataToSend.append('email', formData.value.email)
+          }
+          if (formData.value.office !== undefined && formData.value.office !== currentUser.office) {
+            formDataToSend.append('office', formData.value.office || '')
+          }
           
-          const response = await enforcerAPI.updateProfile(formDataToSend)
+          // Update self via admin API using detected user type and id
+          const type = (userType.value || '').toLowerCase() // admin|deputy|head
+          const response = await adminAPI.updateUser(type, currentUser.id, formDataToSend)
           
           if (response.data.status === 'success') {
             await Swal.fire({
@@ -317,10 +379,16 @@
             imagePreview.value = null
             
             if (response.data.data) {
-              state.user = response.data.data
-              
-              if (response.data.data.image) {
-                profileImage.value = response.data.data.image
+              const updatedUser = response.data.data
+              state.user = {
+                ...(state.user || {}),
+                ...updatedUser
+              }
+              if (updatedUser.image) {
+                profileImage.value = updatedUser.image.startsWith('http')
+                  ? updatedUser.image
+                  : `http://127.0.0.1:8000/storage/${updatedUser.image}`
+                setProfileImageUrl(updatedUser.image)
               }
             }
             
@@ -347,48 +415,12 @@
       }
   
       const changePassword = async () => {
-        try {
-          changingPassword.value = true
-          passwordErrors.value = {}
-          const response = await enforcerAPI.updatePassword?.({
-            current_password: passwordData.value.current_password,
-            new_password: passwordData.value.new_password,
-            new_password_confirmation: passwordData.value.new_password_confirmation
-          })
-  
-          if (response?.data.status === 'success') {
             await Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: 'Password changed successfully!',
-              confirmButtonColor: '#10b981'
-            })
-            
-            // Clear password form
-            passwordData.value = {
-              current_password: '',
-              new_password: '',
-              new_password_confirmation: ''
-            }
-          }
-        } catch (error) {
-          console.error('Failed to change password:', error)
-          
-          if (error.response?.data?.errors) {
-            passwordErrors.value = error.response.data.errors
-          }
-          
-          const errorMessage = error.response?.data?.message || 'Failed to change password. Please try again.'
-          
-          await Swal.fire({
-            icon: 'error',
-            title: 'Password Change Failed',
-            text: errorMessage,
-            confirmButtonColor: '#ef4444'
-          })
-        } finally {
-          changingPassword.value = false
-        }
+          icon: 'info',
+          title: 'Not Available',
+          text: 'Password change for management users is not available here.',
+          confirmButtonColor: '#3b82f6'
+        })
       }
       
       const cancelEdit = () => {
@@ -438,6 +470,7 @@
         profileImage,
         user,
         fullName,
+        roleLabel,
         userInitials,
         onFileSelected,
         removeImage,

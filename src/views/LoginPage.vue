@@ -15,6 +15,9 @@
             <div v-if="error" class="alert alert-error">
               {{ error }}
             </div>
+            <div v-if="success" class="alert alert-success">
+              {{ success }}
+            </div>
 
             <div class="form-group">
               <label for="identifier" class="form-label">Email or Mobile Number</label>
@@ -89,6 +92,7 @@ export default {
     }
 
     const error = ref('')
+    const success = ref('')
     const loading = ref(false)
 
     const handleLogin = async () => {
@@ -121,16 +125,24 @@ export default {
           error.value = result.message
         }
       } catch (err) {
-        error.value = 'An unexpected error occurred. Please try again.'
+        error.value = err.response?.data?.message || 'Invalid credentials'
         console.error('Login error:', err)
       } finally {
         loading.value = false
       }
     }
 
+    // Check for register success message passed via router
+    if (router.currentRoute.value.query?.registered === '1') {
+      success.value = 'Account created successfully! You can now sign in.'
+      setTimeout(() => { success.value = '' }, 3000)
+      router.replace({ query: {} })
+    }
+
     return {
       form,
       error,
+      success,
       loading,
       handleLogin,
       showPassword,

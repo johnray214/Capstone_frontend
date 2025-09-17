@@ -362,10 +362,21 @@
         </div>
       </div>
 
-       <div class="form-group">
-              <label class="form-label">Password *</label>
-              <input v-model="violatorForm.password" type="password" class="form-input" />
-            </div>
+      <div class="form-group">
+        <label class="form-label">Password *</label>
+        <div class="password-input">
+          <input 
+            v-model="violatorForm.password" 
+            :type="showViolatorPassword ? 'text' : 'password'" 
+            class="form-input" 
+            placeholder="Leave blank to keep current password"
+          />
+          <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
+            <span v-if="showViolatorPassword">🙈</span>
+            <span v-else>👁️</span>
+          </button>
+        </div>
+      </div>
           
       <div class="modal-footer">
         <button @click="closeEditViolatorModal" type="button" class="btn btn-secondary">Cancel</button>
@@ -399,6 +410,7 @@ export default {
     const selectedViolator = ref(null)
     const showEditViolatorModal = ref(false);
     const editingViolator = ref(null);
+    const showViolatorPassword = ref(false);
 
     const violatorForm = ref({
       id:'',
@@ -739,7 +751,7 @@ const formatDateTime = (dateString) => {
     })
     
     return {loading,loadingViolators,saving,activeTab,violators,paginatedViolators,violatorFilters,violatorPaginationData,violatorPerPage,visibleViolatorPages,saveViolator,error,viewViolatorDetails,closeViolatorDetailsModal,showViolatorDetailsModal,selectedViolator,archiveViolator,goToViolatorPage,changeViolatorPerPage,getAttemptClass,formatAttempt,formatDate,formatDateTime,formatCurrency,getInitials,editViolator,showEditViolatorModal,violatorForm,closeEditViolatorModal,savingViolator,
-    }
+    showViolatorPassword}
   }
 }
 </script>
@@ -1348,6 +1360,46 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 
 .btn-icon-sm.btn-edit:hover {
   background-color: #dbeafe; 
+}
+/* Password eye alignment */
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.password-input .form-input {
+  padding-right: 44px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.toggle-password:hover {
+  color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.toggle-password:focus {
+  outline: none;
+  color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
 .btn-icon-sm.btn-success:hover {

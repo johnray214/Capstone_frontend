@@ -5,7 +5,8 @@ const state = reactive({
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: false
+  loading: false,
+  imageUrl: null,
 })
 
 export const useAuthStore = () => {
@@ -22,11 +23,17 @@ export const useAuthStore = () => {
               }
 
               state.user = user;
+              // Prefer server-provided absolute URL, else build from relative image
+              const raw = user?.image_url || user?.image || null
+              state.imageUrl = raw
+                ? (String(raw).startsWith('http') ? raw : `http://127.0.0.1:8000/storage/${raw}`)
+                : null
               state.token = data.token;
               state.isAuthenticated = true;
 
               localStorage.setItem("auth_token", data.token);
               localStorage.setItem("user_data", JSON.stringify(user));
+              if (state.imageUrl) localStorage.setItem('user_image_url', state.imageUrl)
 
               return { success: true, user };
           } else {
@@ -63,12 +70,36 @@ export const useAuthStore = () => {
   const initAuth = () => {
     const token = localStorage.getItem('auth_token')
     const userData = localStorage.getItem('user_data')
+    const storedImageUrl = localStorage.getItem('user_image_url')
     
     if (token && userData) {
       state.token = token
       state.user = JSON.parse(userData)
       state.isAuthenticated = true
+      // Restore image url or rebuild from user.image
+      if (storedImageUrl) {
+        state.imageUrl = storedImageUrl
+      } else if (state.user?.image) {
+        state.imageUrl = `http://127.0.0.1:8000/storage/${state.user.image}`
+        localStorage.setItem('user_image_url', state.imageUrl)
+      } else if (state.user?.image_url) {
+        state.imageUrl = state.user.image_url
+        localStorage.setItem('user_image_url', state.imageUrl)
+      }
     }
+  }
+
+  const setProfileImageUrl = (urlOrPath) => {
+    if (!urlOrPath) {
+      state.imageUrl = null
+      localStorage.removeItem('user_image_url')
+      return
+    }
+    const full = String(urlOrPath).startsWith('http')
+      ? urlOrPath
+      : `http://127.0.0.1:8000/storage/${urlOrPath}`
+    state.imageUrl = full
+    localStorage.setItem('user_image_url', full)
   }
 
   const register = async (data) => {
@@ -138,6 +169,7 @@ export const useAuthStore = () => {
     register,
     initAuth,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    setProfileImageUrl,
   }
 }

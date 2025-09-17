@@ -3,11 +3,11 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-    baseURL: "https://capstonebackend-production-ed22.up.railway.app/api",
-    timeout: 60000,
-    headers: {
-        Accept: "application/json",
-    },
+   baseURL: "https://capstonebackend-production-ed22.up.railway.app/api",
+   timeout: 60000,
+   headers: {
+      Accept: "application/json",
+   },
 });
 
 // Request interceptor → attach token
@@ -26,7 +26,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || ''
+        const isAuthFlow = url.includes('/login') || url.includes('/register') || url.includes('/forgot-password') || url.includes('/reset-password')
+        if (error.response?.status === 401 && !isAuthFlow) {
             localStorage.removeItem("auth_token");
             localStorage.removeItem("user_data");
             window.location.href = "/login";
@@ -53,14 +55,17 @@ export const authAPI = {
 ============================ */
 export const adminAPI = {
     // Dashboard
-    dashboard: (params) => api.get("/admin/dashboard", {params}),
+    dashboard: (params) => api.get("/admin/dashboard", { params }),
+    
+    //profile
+    profile: () => api.get("/admin/profile"),
 
     // Officials Management
     getUsers: (role = "") =>
         api.get(`/admin/users${role ? `?role=${role}` : ""}`),
     createUser: (data) => api.post("/admin/users", data),
     updateUser: (userType, id, data) =>
-        api.put(`/admin/users/${userType}/${id}`, data),
+        api.post(`/admin/users/${userType}/${id}?_method=PUT`, data),
     changeUserStatus: (payload) => api.post(`/admin/toggle-status`, payload),
 
     // Archive

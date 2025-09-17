@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar-layout">
     <!-- Sidebar -->
-    <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed, 'sidebar-open': isMobileSidebarOpen }">
       <div class="sidebar-header">
         <div class="logo" v-if="!sidebarCollapsed">
           <span class="logo-text">POSU Echague</span>
@@ -178,6 +178,17 @@
             </svg>
             <span class="nav-text" v-if="!sidebarCollapsed">Archives</span>
           </router-link>
+          <router-link 
+            to="/admin/profile" 
+            class="nav-item"
+            :class="{ active: $route.path === '/admin/profile' }"
+          >
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="nav-text" v-if="!sidebarCollapsed">Profile</span>
+          </router-link>
         </div>
 
         <!-- Enforcer Navigation -->
@@ -283,6 +294,13 @@
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-left">
+          <button class="hamburger-btn" @click="toggleSidebar" aria-label="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <h1 class="page-title">{{ pageTitle }}</h1>
         </div>
         <div class="header-right">
@@ -416,6 +434,7 @@
         <slot></slot>
       </div>
     </main>
+    <div v-if="isMobileSidebarOpen" class="sidebar-overlay" @click="closeMobileSidebar"></div>
   </div>
 </template>
 
@@ -441,15 +460,13 @@ export default {
     const notificationsStore = useNotificationsStore()
     const showManageDropdown = ref(false);
     const sidebarCollapsed = ref(false)
+    const isMobileSidebarOpen = ref(false)
     const showNotifications = ref(false)
     const showUserMenu = ref(false)
     const notificationsDropdown = ref(null)
     const userDropdown = ref(null)
 
-    const profileImage = computed(() => {
-  if (!state.user?.image) return null
-  return `http://127.0.0.1:8000/storage/${state.user.image}`
-    })
+    const profileImage = computed(() => state.imageUrl || null)
 
     const notifications = ref([])
     
@@ -477,6 +494,8 @@ export default {
 
     const getNotificationsRoute = () => {
       const roleRoutes = {
+        'Head': '/admin/notifications/view',
+        'Deputy': '/admin/notifications/view',
         'Admin': '/admin/notifications/view',
         'Violator': '/violator/notifications'
       }
@@ -484,7 +503,15 @@ export default {
     }
     
     const toggleSidebar = () => {
-      sidebarCollapsed.value = !sidebarCollapsed.value
+      if (window.innerWidth <= 1024) {
+        isMobileSidebarOpen.value = !isMobileSidebarOpen.value
+      } else {
+        sidebarCollapsed.value = !sidebarCollapsed.value
+      }
+    }
+
+    const closeMobileSidebar = () => {
+      isMobileSidebarOpen.value = false
     }
 
     const toggleNotifications = () => {
@@ -573,6 +600,11 @@ const manageRoles = computed(() => {
         notificationsStore.fetch(state.user.role)
       }
       document.addEventListener('click', handleClickOutside)
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 1024) {
+          isMobileSidebarOpen.value = false
+        }
+      })
     })
 
     onUnmounted(() => {
@@ -602,6 +634,8 @@ const manageRoles = computed(() => {
       toggleManageDropdown,
       manageRoles,
       unreadCount,
+      isMobileSidebarOpen,
+      closeMobileSidebar,
     }
   }
 }
@@ -786,6 +820,20 @@ const manageRoles = computed(() => {
   top: 0;
   z-index: 100;
 }
+
+.hamburger-btn {
+  display: none;
+  margin-right: 12px;
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  color: #1f2937;
+}
+
+.hamburger-btn svg { width: 20px; height: 20px; }
+
+.hamburger-btn:hover { background: #f3f4f6; }
 
 .header-left {
   flex: 1;
@@ -1508,6 +1556,10 @@ const manageRoles = computed(() => {
   .user-dropdown {
     right: -20px;
   }
+
+  .hamburger-btn { display: inline-flex; align-items: center; justify-content: center; }
+  .page-title { display: inline-block; }
+  .sidebar-overlay { display: block; }
 }
 
 @media (max-width: 768px) {
@@ -1558,6 +1610,17 @@ const manageRoles = computed(() => {
   .notifications-footer {
     padding: 12px 20px;
   }
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 900;
+  display: none;
 }
 
 /* Scrollbar Styles */

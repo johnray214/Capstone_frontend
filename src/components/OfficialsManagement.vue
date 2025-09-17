@@ -100,7 +100,7 @@
                       <div class="user-avatar">
                         <img 
                         v-if="user.image" 
-                        :src="`http://127.0.0.1:8000/storage/profile_images/${user.image}`" 
+                        :src="`http://127.0.0.1:8000/storage/${user.image}`" 
                         alt="avatar" 
                         class="avatar-img"
                       />
@@ -248,8 +248,19 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">Password *</label>
-              <input v-model="userForm.password" type="password" class="form-input" />
+              <label class="form-label">Password</label>
+              <div class="password-input">
+                <input 
+                  v-model="userForm.password" 
+                  :type="showPassword ? 'text' : 'password'"
+                  class="form-input" 
+                  :placeholder="showEditModal ? 'Leave blank to keep current password' : 'Enter a temporary password'"
+                />
+                <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                  <span v-if="showPassword">🙈</span>
+                  <span v-else>👁️</span>
+                </button>
+              </div>
             </div>
 
             <div class="modal-footer">
@@ -282,6 +293,7 @@ export default {
     const showCreateModal = ref(false)
     const showEditModal = ref(false)
     const editingUser = ref(null)
+    const showPassword = ref(false)
 
     const userForm = ref({
       first_name: "",
@@ -379,12 +391,35 @@ export default {
 
     const editUser = user => {
       editingUser.value = user
-      userForm.value = { ...user, password: "" }
+      userForm.value = {
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        middle_name: user.middle_name || "",
+        email: user.email || "",
+        username: user.username || "",
+        office: user.office || "",
+        status: user.status || "active",
+        password: "",
+        user_type: user.user_type || "",
+      }
       showEditModal.value = true
     }
 
     const toggleUserStatus = async (user) => {
-    const newStatus = user.status === 'active' ? 'deactivate' : 'active';
+      const newStatus = user.status === 'active' ? 'deactivate' : 'active';
+      const actionWord = newStatus === 'active' ? 'activate' : 'deactivate'
+
+      const result = await Swal.fire({
+        title: `${actionWord.charAt(0).toUpperCase() + actionWord.slice(1)} user?`,
+        text: `Do you want to ${actionWord} ${user.first_name} ${user.last_name}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: newStatus === 'active' ? '#10b981' : '#ef4444',
+        cancelButtonText: 'Cancel',
+        confirmButtonText: `Yes, ${actionWord}`,
+      })
+
+      if (!result.isConfirmed) return
 
       await adminAPI.changeUserStatus({
         id: user.id,
@@ -392,8 +427,8 @@ export default {
         user_type: user.user_type,
       });
       await loadUsers();
-      Swal.fire('Success', `User status ${newStatus === 'active' ? 'activated' : 'deactivated'}!`, 'success');
-  };
+      Swal.fire('Success', `User ${actionWord}d successfully!`, 'success');
+    };
 
 
     const deleteUser = async (user) => {
@@ -461,6 +496,7 @@ export default {
       saving,
       users,
       userForm,
+      showPassword,
       userFilters,
       allowedRoles,
       filteredUsers,
@@ -1086,6 +1122,46 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 .btn-icon-sm.btn-edit:hover {
   background-color: #dbeafe; 
 }
+/* Password eye alignment */
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.password-input .form-input {
+  padding-right: 44px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.toggle-password:hover {
+  color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.toggle-password:focus {
+  outline: none;
+  color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
 
 .btn-icon-sm.btn-success:hover {
   background: #bbf7d0;
@@ -1114,6 +1190,11 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 .no-data p {
   color: #64748b;
   margin: 0;
+}
+@media (max-width: 768px) {
+  .table-card { overflow-x: auto; }
+  .table { min-width: 900px; }
+  .pagination-container { flex-direction: column; align-items: stretch; gap: 12px; }
 }
 
 /* Modal Styles */

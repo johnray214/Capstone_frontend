@@ -668,7 +668,7 @@ console.log('API response:', data);
         period: '',
         start_date: '',
         end_date: '',
-        export_formats: [''],
+        export_formats: ['pdf'],
         include_charts: true,
         include_details: false,
         include_summary: true,

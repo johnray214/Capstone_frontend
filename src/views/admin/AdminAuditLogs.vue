@@ -121,6 +121,22 @@ tbody td { padding:12px 16px; border-bottom:1px solid #f3f4f6; vertical-align:to
 .pagination button { padding:8px 12px; border:1px solid #d1d5db; background:#fff; border-radius:8px; cursor:pointer; }
 .danger { background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
 code { background:#eef2ff; color:#1e3a8a; padding:2px 6px; border-radius:4px; font-size:12px; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .card-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .card-header .left { width: 100%; }
+  .card-header input { width: 100%; }
+  .metadata pre { max-width: 100%; }
+}
+
+@media (max-width: 640px) {
+  thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tbody tr { border-bottom: 1px solid #e5e7eb; padding: 12px 0; }
+  tbody td { padding: 8px 16px; }
+  .pagination { justify-content: center; }
+}
 </style>
 
 

@@ -16,3 +16,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+img { max-width: 160px; height: auto; }
+
+@media (max-width: 640px) {
+  .home { padding: 16px; }
+  img { max-width: 120px; }
+}
+</style>

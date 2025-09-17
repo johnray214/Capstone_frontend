@@ -162,8 +162,8 @@
           <p v-else>Great! You have no traffic violations on record.</p>
         </div>
 
-        <!-- Violations Table -->
-        <div v-else class="violations-table">
+        <!-- Violations Table (desktop/tablet) -->
+        <div v-else class="violations-table hide-on-mobile">
           <table>
             <thead>
               <tr>
@@ -203,6 +203,41 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Violations Cards (mobile) -->
+        <div v-if="filteredViolations.length > 0" class="violations-cards show-on-mobile">
+          <div class="violation-card" v-for="violation in paginatedViolations" :key="violation.id">
+            <div class="card-row header">
+              <div class="ticket">#{{ violation.ticket_number }}</div>
+              <div class="status">
+                <span class="status-badge" :class="`status-${violation.status?.toLowerCase()}`">{{ violation.status }}</span>
+              </div>
+            </div>
+            <div class="card-row">
+              <div class="label">Date</div>
+              <div class="value">{{ formatDateTime(violation.date_time) }}</div>
+            </div>
+            <div class="card-row">
+              <div class="label">Violation</div>
+              <div class="value">{{ violation.violation?.name }}</div>
+            </div>
+            <div class="card-row" v-if="violation.apprehending_officer">
+              <div class="label">Enforcer</div>
+              <div class="value">{{ violation.apprehending_officer?.first_name }} {{ violation.apprehending_officer?.middle_name }} {{ violation.apprehending_officer?.last_name }}</div>
+            </div>
+            <div class="card-row">
+              <div class="label">Location</div>
+              <div class="value">{{ violation.location }}</div>
+            </div>
+            <div class="card-row amount">
+              <div class="label">Amount</div>
+              <div class="value">₱{{ formatCurrency(violation.fine_amount) }}</div>
+            </div>
+            <div class="card-actions">
+              <button @click="viewViolation(violation)" class="btn btn-secondary btn-sm">View Details</button>
+            </div>
+          </div>
         </div>
 
         <!-- Pagination -->
@@ -304,8 +339,8 @@
                     <span>{{ selectedViolation.apprehending_officer?.first_name }} {{ selectedViolation.apprehending_officer?.middle_name }} {{ selectedViolation.apprehending_officer?.last_name }}</span>
                   </div>
                   <div class="detail-item">
-                    <label>Badge Number:</label>
-                    <span>{{ selectedViolation.apprehending_officer?.id || 'N/A' }}</span>
+                    <label>Office:</label>
+                    <span>{{ selectedViolation.apprehending_officer?.office || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
@@ -341,9 +376,6 @@
           </div>
           <div class="modal-footer">
             <button @click="closeViolationModal" class="btn btn-secondary">Close</button>
-            <button @click="printViolation(selectedViolation)" class="btn btn-primary">
-              Print Details
-            </button>
           </div>
         </div>
       </div>
@@ -1048,6 +1080,61 @@ export default {
   gap: 8px;
 }
 
+/* Mobile Card List */
+.violations-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.violation-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.violation-card .card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.violation-card .card-row.header {
+  padding-top: 0;
+}
+
+.violation-card .ticket {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #374151;
+}
+
+.violation-card .label {
+  font-size: 12px;
+  color: #6b7280;
+  min-width: 86px;
+}
+
+.violation-card .value {
+  font-size: 14px;
+  color: #111827;
+  text-align: right;
+}
+
+.violation-card .amount .value {
+  color: #059669;
+  font-weight: 700;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -1315,6 +1402,15 @@ export default {
   color: #451a03;
 }
 
+/* Utility to hide/show per breakpoint */
+.hide-on-mobile {
+  display: block;
+}
+
+.show-on-mobile {
+  display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .page-header {
@@ -1371,6 +1467,15 @@ export default {
   .payment-instructions {
     flex-direction: column;
     gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hide-on-mobile {
+    display: none;
+  }
+  .show-on-mobile {
+    display: block;
   }
 }
 

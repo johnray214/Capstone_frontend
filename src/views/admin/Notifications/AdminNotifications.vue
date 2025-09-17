@@ -83,7 +83,7 @@
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
-            All Notifications ({{ filteredNotifications.length }})
+            All Notifications ({{ allCountFiltered }})
           </button>
           <button 
             @click="activeView = 'sent'" 
@@ -92,7 +92,7 @@
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 3h18l-9 15L3 3z"/>
             </svg>
-            Sent by Me ({{ sentNotifications.length }})
+            Sent by Me ({{ sentCountFiltered }})
           </button>
           <button 
             @click="activeView = 'received'" 
@@ -103,7 +103,7 @@
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            Received ({{ receivedNotifications.length }})
+            Received ({{ receivedCountFiltered }})
           </button>
         </div>
       </div>
@@ -443,9 +443,10 @@ export default {
       // Count sent notifications
       const sentCount = notifications.value.filter(n => {
         if (!n) return false
-        return (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
-               (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
-               (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
+        return (
+          n.sender_id && n.sender_id.toString() === currentUser.value.id.toString() &&
+          n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+        )
       }).length
       
       // Count received notifications (excluding those sent by current user)
@@ -484,8 +485,11 @@ export default {
         const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
                              (n.target_id === null || n.target_id === '')
         
-        return (isForThisUser || isForAllManagement || isForAllAdmins) && 
-               !(n.sender_id && n.sender_id.toString() === currentUser.value.id.toString())
+        const sentByCurrent = (
+          n.sender_id && n.sender_id.toString() === currentUser.value.id.toString() &&
+          n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+        )
+        return (isForThisUser || isForAllManagement || isForAllAdmins) && !sentByCurrent
       }).length
       
       const stats = {
@@ -548,165 +552,72 @@ export default {
     }
 
     // Computed properties for different views
-    const sentNotifications = computed(() => {
-      if (!currentUser.value) return []
-      
-      return notifications.value.filter(n => {
-        if (!n) return false
-        
-        // Check if the notification has a sender_id that matches the current user's ID
-        const isSenderMatch = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
-        
-        // Check if the notification was sent by the current user's role (for system-generated notifications)
-        const isRoleMatch = n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
-        
-        // Also include notifications where the current user is the sender based on the 'sent_by' field if it exists
-        const isSentByUser = n.sent_by && n.sent_by.toString() === currentUser.value.id.toString()
-        
-        return isSenderMatch || isRoleMatch || isSentByUser
-      })
-    })
+    const sentNotifications = computed(() => filterByView('sent'))
 
-    const receivedNotifications = computed(() => {
-      if (!currentUser.value) return []
-      
-      const filtered = notifications.value.filter(n => {
-        if (!n) return false
-        
-        // Check if notification is for this specific admin
-        const isForThisAdmin = n.target_id != null && 
-                             n.target_type && 
-                             n.target_id.toString() === currentUser.value.id.toString() && 
-                             n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
-        
-        // Check if notification is for all management (target_type is 'Management' and target_id is null/empty)
-        const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
-        
-        // Check if notification is for all admins (target_type is 'Admin' and target_id is null/empty)
-        const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
-                             (n.target_id === null || n.target_id === '')
-        
-        // Exclude notifications that were sent by the current user
-        const isSentByCurrentUser = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
-        
-        return (isForThisAdmin || isForAllManagement || isForAllAdmins) && !isSentByCurrentUser
-      })
-      
-      console.log('Filtered received notifications:', filtered)
-      return filtered
-    })
+    const receivedNotifications = computed(() => filterByView('received'))
 
-    const allNotifications = computed(() => {
-      return Array.isArray(notifications.value) ? notifications.value : []
-    })
-
-    const filteredNotifications = computed(() => {
+    const filterByView = (view) => {
       let result = []
-      
-      // Get notifications based on active view
-      switch (activeView.value) {
+      switch (view) {
         case 'sent':
-          // Only show sent notifications
           result = notifications.value.filter(n => {
             if (!n || !currentUser.value) return false
-            const isSentByUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
-                               (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
-                               (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
-            return isSentByUser
+            const isSenderMatch = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()
+            const isRoleMatch = n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+            return isSenderMatch && isRoleMatch
           })
           break
-          
         case 'received':
-          // Only show received notifications that weren't sent by the current user
           result = notifications.value.filter(n => {
             if (!n || !currentUser.value) return false
-            
-            // Check if sent by current user (exclude these)
-            const isSentByCurrentUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
-                                     (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
-                                     (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
-            
+            const isSentByCurrentUser = (
+              n.sender_id && n.sender_id.toString() === currentUser.value.id.toString() &&
+              n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+            )
             if (isSentByCurrentUser) return false
-            
-            // Check if notification is for this user
-            const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
-                                n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
-            
-            // Check if notification is for all management
+            const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() &&
+                                  n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
             const isForAllManagement = n.target_type === 'Management' && (n.target_id === null || n.target_id === '')
-            
-            // Check if notification is for all admins
-            const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') && 
-                                 (n.target_id === null || n.target_id === '')
-            
+            const isForAllAdmins = (n.target_type === 'Admin' || n.target_type === 'Deputy' || n.target_type === 'Head') &&
+                                   (n.target_id === null || n.target_id === '')
             return isForThisUser || isForAllManagement || isForAllAdmins
           })
           break
-          
         default:
-          // For 'all' view, show notifications that aren't specifically sent by or received by the current user
-          result = notifications.value.filter(n => {
+          // All notifications visible to user, excluding those sent by current user
+          result = (Array.isArray(notifications.value) ? [...notifications.value] : []).filter(n => {
             if (!n || !currentUser.value) return false
-            
-            // Check if sent by current user
-            const isSentByCurrentUser = (n.sender_id && n.sender_id.toString() === currentUser.value.id.toString()) ||
-                                     (n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()) ||
-                                     (n.sent_by && n.sent_by.toString() === currentUser.value.id.toString())
-            
-            // Check if specifically received by current user
-            const isForThisUser = n.target_id && n.target_id.toString() === currentUser.value.id.toString() && 
-                                n.target_type && n.target_type.toLowerCase() === currentUser.value.role.toLowerCase()
-            
-            // Only include if not specifically sent by or received by the current user
-            return !isSentByCurrentUser && !isForThisUser
+            const sentByMe = n.sender_id && n.sender_id.toString() === currentUser.value.id.toString() &&
+                             n.sender_role && n.sender_role.toLowerCase() === currentUser.value.role.toLowerCase()
+            return !sentByMe
           })
       }
-      
-      console.log('Before filtering:', { 
-        view: activeView.value, 
-        count: result.length,
-        receivedCount: receivedNotifications.value.length,
-        allCount: allNotifications.value.length,
-        items: [...result]
-      })
-      
-      // Apply type filter
+
+      // Apply filters
       if (filters.value.type) {
         result = result.filter(n => n.type === filters.value.type)
       }
-      
-      // Apply target type filter
       if (filters.value.targetType) {
         result = result.filter(n => n.target_type === filters.value.targetType)
       }
-      
-      // Apply status filter (only for received notifications)
-      if (filters.value.status && activeView.value !== 'sent') {
+      if (filters.value.status && view !== 'sent') {
         if (filters.value.status === 'unread') {
           result = result.filter(n => !n.read_at)
         } else if (filters.value.status === 'read') {
           result = result.filter(n => n.read_at)
         }
       }
-      
-      // Apply search filter
       if (filters.value.search) {
         const search = filters.value.search.toLowerCase()
-        result = result.filter(n => 
+        result = result.filter(n =>
           (n.title && n.title.toLowerCase().includes(search)) ||
           (n.message && n.message.toLowerCase().includes(search))
         )
       }
-      
-      const sorted = [...result].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      
-      console.log('After filtering and sorting:', {
-        count: sorted.length,
-        items: [...sorted]
-      })
-      
-      return sorted
-    })
+      return [...result].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    }
+
+    const filteredNotifications = computed(() => filterByView(activeView.value))
 
     const getCurrentNotifications = () => {
       return filteredNotifications.value
@@ -722,11 +633,16 @@ export default {
       return Math.ceil(getCurrentNotifications().length / itemsPerPage.value)
     })
 
+    const sentCountFiltered = computed(() => filterByView('sent').length)
+    const receivedCountFiltered = computed(() => filterByView('received').length)
+    const allCountFiltered = computed(() => filterByView('all').length)
+    const unreadCountFiltered = computed(() => filterByView('received').filter(n => !n.read_at).length)
+
     const stats = computed(() => ({
-      sent: sentNotifications.value.length,
-      received: receivedNotifications.value.length,
-      total: allNotifications.value.length,
-      unread: receivedNotifications.value.filter(n => !n.read_at).length
+      sent: sentCountFiltered.value,
+      received: receivedCountFiltered.value,
+      total: allCountFiltered.value,
+      unread: unreadCountFiltered.value
     }))
     
     const hasActiveFilters = computed(() => 
@@ -922,7 +838,11 @@ export default {
       viewTransaction,
       showNotificationMenu,
       formatDateTime,
-      loadNotifications
+      loadNotifications,
+      // expose counts for toggle labels
+      sentCountFiltered,
+      receivedCountFiltered,
+      allCountFiltered
     }
   }
 }
