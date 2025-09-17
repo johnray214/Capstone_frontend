@@ -21,12 +21,6 @@ import AdminNotifications from "../views/admin/Notifications/AdminNotifications.
 import AdminSendNotifications from "../views/admin/Notifications/AdminSendNotifications.vue"
 import Archives from "../views/admin/ArchivesPage.vue";
 
-// Enforcer
-import EnforcerDashboard from "../views/enforcer/EnforcerDashboard.vue";
-import EnforcerTransactions from "../views/enforcer/EnforcerTransactions.vue";
-import EnforcerPerformance from "../views/enforcer/EnforcerPerformance.vue";
-import EnforcerProfile from "@/views/enforcer/EnforcerProfile.vue";
-
 // Violator
 import ViolatorDashboard from "../views/violator/ViolatorDashboard.vue";
 import ViolatorHistory from "../views/violator/ViolatorHistory.vue";
@@ -160,37 +154,6 @@ const routes = [
         name: "admin-archives",
         component: Archives,
         meta: { requiresAuth: true, role: ["Admin", "Deputy", "Head"] },
-    },
-
-    // Enforcer routes
-    {
-        path: "/enforcer",
-        redirect: "/enforcer/dashboard",
-        meta: { requiresAuth: true, role: "Enforcer" },
-    },
-    {
-        path: "/enforcer/dashboard",
-        name: "enforcer-dashboard",
-        component: EnforcerDashboard,
-        meta: { requiresAuth: true, role: "Enforcer" },
-    },
-    {
-        path: "/enforcer/transactions",
-        name: "enforcer-transactions",
-        component: EnforcerTransactions,
-        meta: { requiresAuth: true, role: "Enforcer" },
-    },
-    {
-        path: "/enforcer/performance",
-        name: "enforcer-performance",
-        component: EnforcerPerformance,
-        meta: { requiresAuth: true, role: "Enforcer" },
-    },
-    {
-        path: "/enforcer/profile",
-        name: "enforcer-profile",
-        component: EnforcerProfile,
-        meta: { requiresAuth: true, role: "Enforcer" },
     },
 
     // Violator routes
