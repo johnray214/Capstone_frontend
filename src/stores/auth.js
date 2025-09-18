@@ -53,7 +53,74 @@ export const useAuthStore = () => {
       }
   };
 
+  const loginOfficials = async (credentials) => {
+    try {
+      state.loading = true
+      const response = await authAPI.loginOfficials(credentials)
+      if (response.data.success) {
+        const data = response.data.data
+        const user = data.user || null
+        if (user && !user.role && data.user_type) user.role = data.user_type
+
+        state.user = user
+        const raw = user?.image_url || user?.image || null
+        state.imageUrl = raw
+          ? (String(raw).startsWith('http') ? raw : `http://127.0.0.1:8000/storage/${raw}`)
+          : null
+        state.token = data.token
+        state.isAuthenticated = true
+
+        localStorage.setItem('auth_token', data.token)
+        localStorage.setItem('user_data', JSON.stringify(user))
+        if (state.imageUrl) localStorage.setItem('user_image_url', state.imageUrl)
+
+        return { success: true, user }
+      }
+      return { success: false, message: response.data.message || 'Login failed' }
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Login failed' }
+    } finally {
+      state.loading = false
+    }
+  }
+
+  const loginViolator = async (credentials) => {
+    try {
+      state.loading = true
+      const response = await authAPI.loginViolator(credentials)
+      if (response.data.success) {
+        const data = response.data.data
+        const user = data.violator || null
+        if (user && !user.role && data.user_type) user.role = data.user_type
+
+        state.user = user
+        const raw = user?.image_url || user?.image || null
+        state.imageUrl = raw
+          ? (String(raw).startsWith('http') ? raw : `http://127.0.0.1:8000/storage/${raw}`)
+          : null
+        state.token = data.token
+        state.isAuthenticated = true
+
+        localStorage.setItem('auth_token', data.token)
+        localStorage.setItem('user_data', JSON.stringify(user))
+        if (state.imageUrl) localStorage.setItem('user_image_url', state.imageUrl)
+
+        return { success: true, user }
+      }
+      return { success: false, message: response.data.message || 'Login failed' }
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Login failed' }
+    } finally {
+      state.loading = false
+    }
+  }
+
   const logout = async () => {
+    const previousRole = state.user?.role || state.user?.user_type || null
+    const redirect = previousRole === 'Admin' || previousRole === 'Deputy' || previousRole === 'Head'
+      ? '/officials-login'
+      : '/'
+
     try {
       await authAPI.logout()
     } catch (error) {
@@ -62,8 +129,11 @@ export const useAuthStore = () => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
+      state.imageUrl = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_data')
+      localStorage.removeItem('user_image_url')
+      window.location.href = redirect
     }
   }
 
@@ -165,6 +235,8 @@ export const useAuthStore = () => {
   return {
     state,
     login,
+    loginOfficials,
+    loginViolator,
     logout,
     register,
     initAuth,

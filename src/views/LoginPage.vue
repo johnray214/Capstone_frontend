@@ -78,7 +78,7 @@ export default {
   name: 'LoginPage',
   setup() {
     const router = useRouter()
-    const { login } = useAuthStore()
+    const { loginViolator } = useAuthStore()
 
     const form = ref({
       identifier: '',
@@ -100,7 +100,7 @@ export default {
         loading.value = true
         error.value = ''
 
-        const result = await login(form.value)
+        const result = await loginViolator(form.value)
 
         if (result.success) {
         const user = result.user;

@@ -301,7 +301,7 @@
       if (profileUser.image) {
         profileImage.value = profileUser.image.startsWith('http')
           ? profileUser.image
-          : `https://capstonebackend-production-ed22.up.railway.app/storage/${profileUser.image}`
+          : `http://127.0.0.1:8000/storage/${profileUser.image}`
         setProfileImageUrl(profileUser.image)
       } else {
         profileImage.value = null;

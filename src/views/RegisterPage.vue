@@ -8,15 +8,13 @@
         </div>
         
         <div class="register-form">
-          <h2>Create Account</h2>
+          <h2>Create Violator Account</h2>
           <p class="subtitle">Register using your Email or Mobile Number</p>
 
           <form @submit.prevent="handleRegister">
             <div v-if="error" class="alert alert-error">
               {{ error }}
             </div>
-
-            <!-- Success will be shown on Login page after redirect -->
 
           <!-- Identifier (Email or Mobile) -->
           <div class="form-group">

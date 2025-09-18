@@ -577,6 +577,13 @@
                                             selectedTransaction.violation?.name
                                         }}</span>
                                     </div>
+                                    <div class="detail-item full-width">
+                                      <label>Description:</label>
+                                      <span>{{
+                                          selectedTransaction.violation
+                                              ?.description
+                                      }}</span>
+                                  </div>
                                     <div class="detail-item">
                                         <label>Location:</label>
                                         <span>{{
@@ -584,12 +591,9 @@
                                         }}</span>
                                     </div>
                                 </div><br>
-                                <div class="detail-item full-width">
-                                    <label>Description:</label>
-                                    <span>{{
-                                        selectedTransaction.violation
-                                            ?.description
-                                    }}</span>
+                                 <div class="detail-item full-width" v-if="selectedTransaction.violator?.id_photo_url">
+                                    <label>ID Photo:</label>
+                                    <img :src="selectedTransaction.violator.id_photo_url" alt="ID Photo" style="max-width: 100%; border-radius: 8px; border: 1px solid #e5e7eb;" />
                                 </div>
                                 <div
                                     v-if="selectedTransaction.remarks"

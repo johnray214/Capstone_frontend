@@ -3,10 +3,10 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-   baseURL: "https://capstonebackend-production-ed22.up.railway.app/api",
+   baseURL: 'https://capstonebackend-production-ed22.up.railway.app/api',
    timeout: 60000,
    headers: {
-      Accept: "application/json",
+      Accept: 'application/json',
    },
 });
 
@@ -29,9 +29,23 @@ api.interceptors.response.use(
         const url = error.config?.url || ''
         const isAuthFlow = url.includes('/login') || url.includes('/register') || url.includes('/forgot-password') || url.includes('/reset-password')
         if (error.response?.status === 401 && !isAuthFlow) {
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("user_data");
-            window.location.href = "/login";
+            // Determine proper redirect before clearing storage
+            let redirect = '/'
+            try {
+                const rawUser = localStorage.getItem('user_data')
+                if (rawUser) {
+                    const user = JSON.parse(rawUser)
+                    const role = user?.role || user?.user_type
+                    if (role === 'Admin' || role === 'Deputy' || role === 'Head') {
+                        redirect = '/officials-login'
+                    }
+                }
+            } catch (_) { void 0 }
+
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('user_data')
+            localStorage.removeItem('user_image_url')
+            window.location.href = redirect
         }
         return Promise.reject(error);
     }
@@ -42,6 +56,8 @@ api.interceptors.response.use(
 ============================ */
 export const authAPI = {
     login: (credentials) => api.post("/login", credentials),
+    loginOfficials: (credentials) => api.post("/admin/login", credentials),
+    loginViolator: (credentials) => api.post("/login", credentials),
     register: (data) => api.post("/register", data),
     logout: () => api.post("/logout"),
     profile: () => api.get("/profile"),

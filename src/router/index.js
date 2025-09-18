@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/auth";
 // Import views
 import HomePage from "../views/HomePage.vue";
 import LoginPage from "../views/LoginPage.vue";
+import OfficialsLogin from "../views/admin/OfficialsLogin.vue";
 import RegisterPage from "../views/RegisterPage.vue";
 import ForgotPassword from "../views/ForgotPassword.vue";
 import ResetPassword from "../views/ResetPassword.vue";
@@ -40,6 +41,12 @@ const routes = [
         path: "/login",
         name: "login",
         component: LoginPage,
+        meta: { requiresGuest: true },
+    },
+    {
+        path: "/officials-login",
+        name: "officials-login",
+        component: OfficialsLogin,
         meta: { requiresGuest: true },
     },
     {
@@ -212,6 +219,11 @@ router.beforeEach((to, from, next) => {
 
     if (to.meta.requiresAuth) {
         if (!state.isAuthenticated) {
+            // If trying to access admin area and not authenticated, send to officials login
+            if (to.path.startsWith('/admin')) {
+                next('/officials-login');
+                return;
+            }
             next("/login");
             return;
         }

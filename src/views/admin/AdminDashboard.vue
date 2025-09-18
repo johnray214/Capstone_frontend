@@ -1,30 +1,6 @@
 <template>
   <SidebarLayout page-title="Admin Dashboard">
     <div class="admin-dashboard">
-      <!-- Header Section -->
-      <header class="dashboard-header">
-        <div class="header-content">
-          <h1>Dashboard Overview</h1>
-          <p>Monitor your system performance and key metrics</p>
-        </div>
-        <button class="refresh-btn" @click="loadDashboardData" aria-label="Refresh Dashboard">
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            stroke-width="2" 
-            stroke-linecap="round" 
-            stroke-linejoin="round"
-          >
-            <path d="M21 12a9 9 0 1 1-3-6.7" />
-            <polyline points="21 3 21 9 15 9" />
-          </svg>
-          Refresh
-        </button>
-      </header>
-
       <!-- Stats Filter Section -->
       <section class="stats-filter">
         <div class="filter-controls">
