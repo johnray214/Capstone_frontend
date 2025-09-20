@@ -208,7 +208,6 @@ router.beforeEach((to, from, next) => {
         Head: "/admin/dashboard",
         Deputy: "/admin/dashboard",
         Admin: "/admin/dashboard",
-        Enforcer: "/enforcer/dashboard",
         Violator: "/violator/dashboard",
     };
 
