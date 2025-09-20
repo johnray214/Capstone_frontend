@@ -33,7 +33,7 @@
           <div class="form-group">
             <div class="password-header">
               <label for="password" class="form-label">Password</label>
-              <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
+              <router-link to="/forgot-password?from=officials" class="forgot-password">Forgot Password?</router-link>
             </div>
             <div class="password-input">
               <input

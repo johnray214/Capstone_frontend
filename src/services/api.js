@@ -62,7 +62,10 @@ export const authAPI = {
     logout: () => api.post("/logout"),
     profile: () => api.get("/profile"),
     getRoles: () => api.get("/roles"),
-    forgotPassword: (identifier) => api.post("/forgot-password", { identifier }),
+    forgotPassword: (identifier, isOfficials = false) => {
+      const endpoint = isOfficials ? "/forgot-password-officials" : "/forgot-password-violator";
+      return api.post(endpoint, identifier);
+    },
     resetPassword: (data) => api.post("/reset-password", data),
 };
 

@@ -81,7 +81,9 @@ export default {
       error.value = '';
 
       try {
-        const result = await authStore.forgotPassword(identifier.value);
+        // Determine if user came from officials login or regular login
+        const isOfficialsLogin = proxy.$route.query.from === 'officials';
+        const result = await authStore.forgotPassword(identifier.value, isOfficialsLogin);
         if (result.success) {
           emailSent.value = true;
           proxy.$swal.fire({

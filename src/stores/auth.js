@@ -187,10 +187,10 @@ export const useAuthStore = () => {
     }
   }
 
-  const forgotPassword = async (identifier) => {
+  const forgotPassword = async (identifier, isOfficials = false) => {
     try {
       state.loading = true;
-      const response = await authAPI.forgotPassword({ identifier });
+      const response = await authAPI.forgotPassword({ identifier }, isOfficials);
       return { 
         success: true, 
         message: response.data?.message || 'A password reset link has been sent to your email',

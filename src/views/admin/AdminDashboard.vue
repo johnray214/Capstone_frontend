@@ -1631,12 +1631,12 @@ export default {
   background: #f59e0b;
 }
 
-.status-deactivated {
+.status-deactivate {
   background: rgba(239, 68, 68, 0.1);
   color: #991b1b;
 }
 
-.status-deactivated .status-dot {
+.status-deactivate .status-dot {
   background: #ef4444;
 }
 

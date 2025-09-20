@@ -124,7 +124,7 @@ export default {
           text: 'Invalid or expired reset link. Please request a new one.',
           confirmButtonColor: '#3b82f6',
         }).then(() => {
-          router.push('/forgot-password');
+          router.push('/forgot-password?from=violator');
         });
       }
     });
