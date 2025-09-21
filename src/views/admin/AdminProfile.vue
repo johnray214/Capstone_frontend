@@ -193,7 +193,7 @@ import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
-import { validatePassword, getPasswordRequirements } from '@/utils/passwordValidation'
+import { validatePassword } from '@/utils/passwordValidation'
   
   export default {
     name: 'AdminProfile',
