@@ -1,5 +1,5 @@
 <template>
-<SidebarLayout page-title="Officials Management">
+<SidebarLayout page-title="POSU Officers Management">
 <OfficialsManagement :currentUserRole="authState.user?.role">
 
 </OfficialsManagement>

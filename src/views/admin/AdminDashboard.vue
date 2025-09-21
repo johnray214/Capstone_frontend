@@ -514,8 +514,11 @@ export default {
         },
         {
           iconSvg: `
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 3v18"></path>
+              <path d="M6 3h7a4 4 0 0 1 0 8H6"></path>
+              <line x1="3" y1="6" x2="18" y2="6"></line>
+              <line x1="3" y1="9" x2="18" y2="9"></line>
             </svg>`,
           value: stats.value.total_transactions || 0,
           label: 'Total Transactions',
@@ -554,9 +557,10 @@ export default {
         {
           iconSvg: `
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1v22"></path>
-              <path d="M17 5H7a3 3 0 1 0 0 6h10a3 3 0 1 1 0 6H7"></path>
-              <circle cx="12" cy="12" r="1"></circle>
+              <path d="M6 3v18"></path>
+              <path d="M6 3h7a4 4 0 0 1 0 8H6"></path>
+              <line x1="3" y1="6" x2="18" y2="6"></line>
+              <line x1="3" y1="9" x2="18" y2="9"></line>
             </svg>`,
           value: `₱${formatCurrency(stats.value.total_revenue || 0)}`,
           label: 'Total Revenue',
@@ -569,7 +573,10 @@ export default {
         {
           iconSvg: `
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              <path d="M6 3v18"></path>
+              <path d="M6 3h7a4 4 0 0 1 0 8H6"></path>
+              <line x1="3" y1="6" x2="18" y2="6"></line>
+              <line x1="3" y1="9" x2="18" y2="9"></line>
             </svg>`,
           value: `₱${formatCurrency(stats.value.pending_revenue || 0)}`,
           label: 'Pending Revenue',

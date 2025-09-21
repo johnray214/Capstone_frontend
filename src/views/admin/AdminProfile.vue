@@ -1,536 +1,709 @@
 <template>
-    <SidebarLayout page-title="My Profile">
-      <div class="enforcer-profile">
-        <!-- Profile Header -->
-        <div class="profile-header">
-          <div class="profile-avatar">
-            <div class="avatar-circle" v-if="!profileImage">
-              {{ userInitials }}
-            </div>
-            <img v-else :src="profileImage" alt="Profile" class="profile-image">
+  <SidebarLayout page-title="My Profile">
+    <div class="enforcer-profile">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <div class="avatar-circle" v-if="!profileImage">
+            {{ userInitials }}
           </div>
-          <div class="profile-info">
-            <h2>{{ fullName }}</h2>
-            <p class="enforcer">{{ roleLabel }}</p>
-          </div>
-          <div class="profile-actions">
-            <button @click="editMode = !editMode" class="btn btn-primary">
-              {{ editMode ? 'Cancel' : 'Edit Profile' }}
-            </button>
-          </div>
+          <img v-else :src="profileImage" alt="Profile" class="profile-image">
         </div>
-  
-        <!-- Profile Form -->
-        <div class="profile-form">
-          <div class="form-section">
-            <h3>Personal Information</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="first_name">First Name *</label>
-                <input
-                  id="first_name"
-                  type="text"
-                  v-model="formData.first_name"
-                  :disabled="!editMode"
-                  class="form-input"
-                  :class="{ error: errors.first_name }"
-                >
-                <span v-if="errors.first_name" class="error-message">{{ errors.first_name[0] }}</span>
-              </div>
-  
-              <div class="form-group">
-                <label for="middle_name">Middle Name</label>
-                <input
-                  id="middle_name"
-                  type="text"
-                  v-model="formData.middle_name"
-                  :disabled="!editMode"
-                  class="form-input"
-                  :class="{ error: errors.middle_name }"
-                >
-                <span v-if="errors.middle_name" class="error-message">{{ errors.middle_name[0] }}</span>
-              </div>
-  
-              <div class="form-group">
-                <label for="last_name">Last Name *</label>
-                <input
-                  id="last_name"
-                  type="text"
-                  v-model="formData.last_name"
-                  :disabled="!editMode"
-                  class="form-input"
-                  :class="{ error: errors.last_name }"
-                >
-                <span v-if="errors.last_name" class="error-message">{{ errors.last_name[0] }}</span>
-              </div>
-  
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input
-                  id="email"
-                  type="email"
-                  v-model="formData.email"
-                  :disabled="!editMode"
-                  class="form-input"
-                  :class="{ error: errors.email }"
-                >
-                <span v-if="errors.email" class="error-message">{{ errors.email[0] }}</span>
-              </div>
-
-              <div class="form-group">
-                <label for="office">Office</label>
-                <input
-                  id="office"
-                  type="text"
-                  v-model="formData.office"
-                  :disabled="!editMode"
-                  class="form-input"
-                  :class="{ error: errors.office }"
-                >
-                <span v-if="errors.office" class="error-message">{{ errors.office[0] }}</span>
-              </div>
-
-              <div class="form-group full-width" v-if="editMode">
-                <label for="image">Profile Image</label>
-                <input
-                  id="image"
-                  type="file"
-                  @change="onFileSelected"
-                  accept="image/*"
-                  class="form-input"
-                  :class="{ error: errors.image }"
-                >
-                <span v-if="errors.image" class="error-message">{{ errors.image[0] }}</span>
-                <div class="file-note">
-                  <p>Upload a clear profile photo. Accepted formats: JPG, PNG, GIF. Maximum size: 2MB.</p>
-                  <p v-if="selectedFile">Selected: {{ selectedFile.name }}</p>
-                </div>
-              </div>
-  
-              <!-- Image Preview -->
-              <div class="form-group full-width" v-if="imagePreview">
-                <label>Image Preview</label>
-                <div class="image-preview">
-                  <img :src="imagePreview" alt="Preview" class="preview-image">
-                  <button @click="removeImage" type="button" class="btn btn-danger btn-sm">Remove</button>
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div v-if="editMode" class="form-actions">
-            <button @click="cancelEdit" class="btn btn-secondary">
-              Cancel
-            </button>
-            <button @click="saveProfile" :disabled="saving" class="btn btn-success">
-              <span v-if="saving" class="spinner-sm"></span>
-              {{ saving ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
+        <div class="profile-info">
+          <h2>{{ fullName }}</h2>
+          <p class="enforcer">{{ roleLabel }}</p>
         </div>
-  
-        <!-- Change Password Section -->
-        <div class="profile-form">
-          <div class="form-section">
-            <h3>Change Password</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="current_password">Current Password *</label>
-                <input
-                  id="current_password"
-                  type="password"
-                  v-model="passwordData.current_password"
-                  class="form-input"
-                  :class="{ error: passwordErrors.current_password }"
-                  placeholder="Enter Current Password"
-                >
-                <span v-if="passwordErrors.current_password" class="error-message">{{ passwordErrors.current_password[0] }}</span>
-              </div>
-  
-              <div class="form-group">
-                <label for="new_password">New Password *</label>
-                <input
-                  id="new_password"
-                  type="password"
-                  v-model="passwordData.new_password"
-                  class="form-input"
-                  :class="{ error: passwordErrors.new_password }"
-                  placeholder="8+ chars, 1 uppercase, 1 number"
-                >
-                <span v-if="passwordErrors.new_password" class="error-message">{{ passwordErrors.new_password[0] }}</span>
-              </div>
-  
-              <div class="form-group">
-                <label for="new_password_confirmation">Confirm New Password *</label>
-                <input
-                  id="new_password_confirmation"
-                  type="password"
-                  v-model="passwordData.new_password_confirmation"
-                  class="form-input"
-                  :class="{ error: passwordErrors.new_password_confirmation }"
-                  placeholder="Confirm new password"
-                >
-                <span v-if="passwordErrors.new_password_confirmation" class="error-message">{{ passwordErrors.new_password_confirmation[0] }}</span>
-              </div>
-            </div>
-  
-            <div class="form-actions">
-              <button @click="changePassword" :disabled="changingPassword" class="btn btn-primary">
-                <span v-if="changingPassword" class="spinner-sm"></span>
-                {{ changingPassword ? 'Changing...' : 'Change Password' }}
-              </button>
-            </div>
-          </div>
+        <div class="profile-actions">
+          <button @click="editMode = !editMode" class="btn btn-primary">
+            {{ editMode ? 'Cancel' : 'Edit Profile' }}
+          </button>
         </div>
-  
       </div>
-    </SidebarLayout>
-  </template>
+
+      <!-- Profile Form -->
+      <div class="profile-form">
+        <div class="form-section">
+          <h3>Personal Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="first_name">First Name *</label>
+              <input
+                id="first_name"
+                type="text"
+                v-model="formData.first_name"
+                :disabled="!editMode"
+                class="form-input"
+                :class="{ error: errors.first_name }"
+              >
+              <span v-if="errors.first_name" class="error-message">{{ errors.first_name[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="middle_name">Middle Name</label>
+              <input
+                id="middle_name"
+                type="text"
+                v-model="formData.middle_name"
+                :disabled="!editMode"
+                class="form-input"
+                :class="{ error: errors.middle_name }"
+              >
+              <span v-if="errors.middle_name" class="error-message">{{ errors.middle_name[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="last_name">Last Name *</label>
+              <input
+                id="last_name"
+                type="text"
+                v-model="formData.last_name"
+                :disabled="!editMode"
+                class="form-input"
+                :class="{ error: errors.last_name }"
+              >
+              <span v-if="errors.last_name" class="error-message">{{ errors.last_name[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email *</label>
+              <input
+                id="email"
+                type="email"
+                v-model="formData.email"
+                :disabled="!editMode"
+                class="form-input"
+                :class="{ error: errors.email }"
+              >
+              <span v-if="errors.email" class="error-message">{{ errors.email[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="office">Office</label>
+              <input
+                id="office"
+                type="text"
+                v-model="formData.office"
+                :disabled="!editMode"
+                class="form-input"
+                :class="{ error: errors.office }"
+              >
+              <span v-if="errors.office" class="error-message">{{ errors.office[0] }}</span>
+            </div>
+
+            <div class="form-group full-width" v-if="editMode">
+              <label for="image">Profile Image</label>
+              <input
+                id="image"
+                type="file"
+                @change="onFileSelected"
+                accept="image/*"
+                class="form-input"
+                :class="{ error: errors.image }"
+              >
+              <span v-if="errors.image" class="error-message">{{ errors.image[0] }}</span>
+              <div class="file-note">
+                <p>Upload a clear profile photo. Accepted formats: JPG, PNG, GIF. Maximum size: 2MB.</p>
+                <p v-if="selectedFile">Selected: {{ selectedFile.name }}</p>
+              </div>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="form-group full-width" v-if="imagePreview">
+              <label>Image Preview</label>
+              <div class="image-preview">
+                <img :src="imagePreview" alt="Preview" class="preview-image">
+                <button @click="removeImage" type="button" class="btn btn-danger btn-sm">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="editMode" class="form-actions">
+          <button @click="cancelEdit" class="btn btn-secondary">
+            Cancel
+          </button>
+          <button @click="saveProfile" :disabled="saving" class="btn btn-success">
+            <span v-if="saving" class="spinner-sm"></span>
+            {{ saving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Enhanced Change Password Section -->
+      <div class="profile-form">
+        <div class="form-section">
+          <h3>Change Password</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="current_password">Current Password *</label>
+              <div class="password-input-container">
+                <div class="password-input">
+                  <input
+                    id="current_password"
+                    :type="showCurrentPassword ? 'text' : 'password'"
+                    v-model="passwordData.current_password"
+                    class="form-input"
+                    :class="{ error: passwordErrors.current_password }"
+                    placeholder="Enter Current Password"
+                  >
+                  <button type="button" class="toggle-password" @click="showCurrentPassword = !showCurrentPassword">
+                    <span v-if="showCurrentPassword">🙈</span>
+                    <span v-else>👁️</span>
+                  </button>
+                </div>
+              </div>
+              <span v-if="passwordErrors.current_password" class="error-message">{{ passwordErrors.current_password[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="new_password">New Password *</label>
+              <div class="password-input-container">
+                <div class="password-input">
+                  <input
+                    id="new_password"
+                    :type="showNewPassword ? 'text' : 'password'"
+                    v-model="passwordData.new_password"
+                    class="form-input"
+                    :class="{
+                      error: passwordErrors.new_password,
+                      'password-weak': newPasswordStrength === 'weak',
+                      'password-medium': newPasswordStrength === 'medium',
+                      'password-strong': newPasswordStrength === 'strong'
+                    }"
+                    placeholder="Enter New Password"
+                  >
+                  <button type="button" class="toggle-password" @click="showNewPassword = !showNewPassword">
+                    <span v-if="showNewPassword">🙈</span>
+                    <span v-else>👁️</span>
+                  </button>
+                </div>
+                
+                <!-- Password Strength Indicator -->
+                <div v-if="passwordData.new_password && newPasswordStrength" class="password-strength">
+                  <div class="strength-bar">
+                    <div 
+                      class="strength-fill"
+                      :class="getPasswordStrengthClass(newPasswordStrength)"
+                      :style="{ width: newPasswordStrength === 'weak' ? '33%' : newPasswordStrength === 'medium' ? '66%' : '100%' }"
+                    ></div>
+                  </div>
+                  <span class="strength-text" :class="getPasswordStrengthClass(newPasswordStrength)">
+                    {{ getPasswordStrengthText(newPasswordStrength) }}
+                  </span>
+                </div>
+                
+                <!-- Password Requirements -->
+                <div v-if="passwordData.new_password" class="password-requirements">
+                  <small class="requirements-title">Password Requirements:</small>
+                  <ul class="requirements-list">
+                    <li :class="{ 'requirement-met': passwordData.new_password.length >= 8 }">
+                      <span class="requirement-icon">
+                        <svg v-if="passwordData.new_password.length >= 8" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least 8 characters long
+                    </li>
+                    <li :class="{ 'requirement-met': /[A-Z]/.test(passwordData.new_password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/[A-Z]/.test(passwordData.new_password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one uppercase letter (A-Z)
+                    </li>
+                    <li :class="{ 'requirement-met': /[a-z]/.test(passwordData.new_password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/[a-z]/.test(passwordData.new_password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one lowercase letter (a-z)
+                    </li>
+                    <li :class="{ 'requirement-met': /\d/.test(passwordData.new_password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/\d/.test(passwordData.new_password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one number (0-9)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <span v-if="passwordErrors.new_password" class="error-message">{{ passwordErrors.new_password[0] }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="new_password_confirmation">Confirm New Password *</label>
+              <div class="password-input-container">
+                <div class="password-input">
+                  <input
+                    id="new_password_confirmation"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    v-model="passwordData.new_password_confirmation"
+                    class="form-input"
+                    :class="{ 
+                      error: passwordErrors.new_password_confirmation,
+                      'password-match': passwordData.new_password && passwordData.new_password_confirmation && passwordData.new_password === passwordData.new_password_confirmation,
+                      'password-mismatch': passwordData.new_password && passwordData.new_password_confirmation && passwordData.new_password !== passwordData.new_password_confirmation
+                    }"
+                    placeholder="Confirm new password"
+                  >
+                  <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+                    <span v-if="showConfirmPassword">🙈</span>
+                    <span v-else>👁️</span>
+                  </button>
+                </div>
+                
+                <!-- Password Match Indicator -->
+                <div v-if="passwordData.new_password && passwordData.new_password_confirmation" class="password-match-indicator">
+                  <div v-if="passwordData.new_password === passwordData.new_password_confirmation" class="match-success">
+                    <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                    Passwords match
+                  </div>
+                  <div v-else class="match-error">
+                    <svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Passwords do not match
+                  </div>
+                </div>
+              </div>
+              <span v-if="passwordErrors.new_password_confirmation" class="error-message">{{ passwordErrors.new_password_confirmation[0] }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button @click="changePassword" :disabled="changingPassword || !isPasswordFormValid" class="btn btn-primary">
+              <span v-if="changingPassword" class="spinner-sm"></span>
+              {{ changingPassword ? 'Changing...' : 'Change Password' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </SidebarLayout>
+</template>
   
   <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
-import { validatePassword } from '@/utils/passwordValidation'
-  
-  export default {
-    name: 'AdminProfile',
-    components: {
-      SidebarLayout
-    },
-    setup() {
-      const { state, setProfileImageUrl } = useAuthStore()
-      const editMode = ref(false)
-      const saving = ref(false)
-      const changingPassword = ref(false)
-      const performanceStats = ref({})
-      const recentActivity = ref([])
-      const userType = ref('Admin')
-      const selectedFile = ref(null)
-      const imagePreview = ref(null)
-      const profileImage = ref(null)
-      
-      const formData = ref({
-        first_name: '',
-        middle_name: '',
-        last_name: '',
-        email: '',
-        office: ''
-      })
-  
-      const passwordData = ref({
-        current_password: '',
-        new_password: '',
-        new_password_confirmation: ''
-      })
-      
-      const errors = ref({})
-      const passwordErrors = ref({})
-      
-      const user = computed(() => state.user)
-      
-      const fullName = computed(() => {
-        if (!user.value) return ''
-        const middle = user.value.middle_name ? ` ${user.value.middle_name}` : ''
-        return `${user.value.first_name}${middle} ${user.value.last_name}`
-      })
-      
-      const userInitials = computed(() => {
-        if (!user.value) return 'A'
-        const first = user.value.first_name?.charAt(0) || ''
-        const last = user.value.last_name?.charAt(0) || ''
-        return `${first}${last}`.toUpperCase()
-      })
+import { validatePassword, getPasswordStrength } from '@/utils/passwordValidation'
 
-      const roleLabel = computed(() => userType.value)
-      
-      const onFileSelected = (event) => {
-        const file = event.target.files[0]
-        if (file) {
-          // Validate file size (2MB max)
-          if (file.size > 2 * 1024 * 1024) {
-            errors.value.image = ['File size must be less than 2MB']
-            return
-          }
-          
-          // Validate file type
-          if (!file.type.startsWith('image/')) {
-            errors.value.image = ['Please select a valid image file']
-            return
-          }
-          
-          selectedFile.value = file
-          errors.value.image = null
-          
-          // Create preview
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            imagePreview.value = e.target.result
-          }
-          reader.readAsDataURL(file)
-        }
-      }
-      
-      const removeImage = () => {
-        selectedFile.value = null
-        imagePreview.value = null
-        const fileInput = document.getElementById('image')
-        if (fileInput) fileInput.value = ''
-      }
-      
-      const loadProfileData = async () => {
-  try {
-    const response = await adminAPI.profile()
+export default {
+  name: 'AdminProfile',
+  components: {
+    SidebarLayout
+  },
+  setup() {
+    const { state, setProfileImageUrl } = useAuthStore()
+    const editMode = ref(false)
+    const saving = ref(false)
+    const changingPassword = ref(false)
+    const performanceStats = ref({})
+    const recentActivity = ref([])
+    const userType = ref('Admin')
+    const selectedFile = ref(null)
+    const imagePreview = ref(null)
+    const profileImage = ref(null)
+    
+    // Password visibility toggles
+    const showCurrentPassword = ref(false)
+    const showNewPassword = ref(false)
+    const showConfirmPassword = ref(false)
+    
+    // Password validation states
+    const newPasswordStrength = ref('')
+    
+    const formData = ref({
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      email: '',
+      office: ''
+    })
 
-    if (response.data.success) {
-      const data = response.data.data
-      const type = (data.user_type || '').toString()
-      userType.value = type || 'Admin'
-      const key = (type || '').toLowerCase()
-      const profileUser = key ? (data[key] || {}) : {}
+    const passwordData = ref({
+      current_password: '',
+      new_password: '',
+      new_password_confirmation: ''
+    })
+    
+    const errors = ref({})
+    const passwordErrors = ref({})
+    
+    const user = computed(() => state.user)
+    
+    const fullName = computed(() => {
+      if (!user.value) return ''
+      const middle = user.value.middle_name ? ` ${user.value.middle_name}` : ''
+      return `${user.value.first_name}${middle} ${user.value.last_name}`
+    })
+    
+    const userInitials = computed(() => {
+      if (!user.value) return 'A'
+      const first = user.value.first_name?.charAt(0) || ''
+      const last = user.value.last_name?.charAt(0) || ''
+      return `${first}${last}`.toUpperCase()
+    })
 
-      formData.value = {
-        first_name: profileUser.first_name || '',
-        middle_name: profileUser.middle_name || '',
-        last_name: profileUser.last_name || '',
-        email: profileUser.email || '',
-        office: profileUser.office || ''
-      }
+    const roleLabel = computed(() => userType.value)
 
-      if (profileUser.image) {
-        profileImage.value = profileUser.image.startsWith('http')
-          ? profileUser.image
-          : `http://127.0.0.1:8000/storage/${profileUser.image}`
-        setProfileImageUrl(profileUser.image)
+    // Watch new password for real-time validation
+    watch(() => passwordData.value.new_password, (newPassword) => {
+      if (newPassword) {
+        newPasswordStrength.value = getPasswordStrength(newPassword)
       } else {
-        profileImage.value = null;
-        setProfileImageUrl(null)
+        newPasswordStrength.value = ''
       }
+    })
 
-      performanceStats.value = data.performance_stats || {}
+    // Computed property to check if password form is valid
+    const isPasswordFormValid = computed(() => {
+      return passwordData.value.current_password &&
+             passwordData.value.new_password &&
+             passwordData.value.new_password_confirmation &&
+             passwordData.value.new_password === passwordData.value.new_password_confirmation &&
+             newPasswordStrength.value !== 'weak'
+    })
 
-      // Update store so computed fullName reacts while preserving role and other fields
-      if (profileUser) {
-        const existing = state.user || {}
-        const roleFromApi = data.user_type || existing.role
-        state.user = {
-          ...existing,
-          ...profileUser,
-          role: roleFromApi || existing.role
+    const getPasswordStrengthClass = (strength) => {
+      return `password-${strength}`
+    }
+
+    const getPasswordStrengthText = (strength) => {
+      switch (strength) {
+        case 'weak': return 'Weak'
+        case 'medium': return 'Medium'
+        case 'strong': return 'Strong'
+        default: return ''
+      }
+    }
+    
+    const onFileSelected = (event) => {
+      const file = event.target.files[0]
+      if (file) {
+        // Validate file size (2MB max)
+        if (file.size > 2 * 1024 * 1024) {
+          errors.value.image = ['File size must be less than 2MB']
+          return
         }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          errors.value.image = ['Please select a valid image file']
+          return
+        }
+        
+        selectedFile.value = file
+        errors.value.image = null
+        
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          imagePreview.value = e.target.result
+        }
+        reader.readAsDataURL(file)
       }
     }
-  } catch (error) {
-    console.error('Failed to load profile data:', error)
+    
+    const removeImage = () => {
+      selectedFile.value = null
+      imagePreview.value = null
+      const fileInput = document.getElementById('image')
+      if (fileInput) fileInput.value = ''
+    }
+    
+    const loadProfileData = async () => {
+      try {
+        const response = await adminAPI.profile()
 
-    if (user.value) {
-      formData.value = {
-        first_name: user.value.first_name || '',
-        middle_name: user.value.middle_name || '',
-        last_name: user.value.last_name || ''
-      }
-    }
-  }
-}
-      
-      const saveProfile = async () => {
-        try {
-          saving.value = true
-          errors.value = {}
-          
-          const formDataToSend = new FormData()
-          // Only send fields that actually changed to avoid forcing inputs
-          const currentUser = user.value || {}
-          if (formData.value.first_name && formData.value.first_name !== currentUser.first_name) {
-            formDataToSend.append('first_name', formData.value.first_name)
+        if (response.data.success) {
+          const data = response.data.data
+          const type = (data.user_type || '').toString()
+          userType.value = type || 'Admin'
+          const key = (type || '').toLowerCase()
+          const profileUser = key ? (data[key] || {}) : {}
+
+          formData.value = {
+            first_name: profileUser.first_name || '',
+            middle_name: profileUser.middle_name || '',
+            last_name: profileUser.last_name || '',
+            email: profileUser.email || '',
+            office: profileUser.office || ''
           }
-          if (formData.value.middle_name !== undefined && formData.value.middle_name !== currentUser.middle_name) {
-          formDataToSend.append('middle_name', formData.value.middle_name || '')
+
+          if (profileUser.image) {
+            profileImage.value = profileUser.image.startsWith('http')
+              ? profileUser.image
+              : `http://127.0.0.1:8000/storage/${profileUser.image}`
+            setProfileImageUrl(profileUser.image)
+          } else {
+            profileImage.value = null;
+            setProfileImageUrl(null)
           }
-          if (formData.value.last_name && formData.value.last_name !== currentUser.last_name) {
-            formDataToSend.append('last_name', formData.value.last_name)
-          }
-          
-          if (selectedFile.value) {
-  formDataToSend.append('image', selectedFile.value)
-}
-          if (formData.value.email && formData.value.email !== currentUser.email) {
-            formDataToSend.append('email', formData.value.email)
-          }
-          if (formData.value.office !== undefined && formData.value.office !== currentUser.office) {
-            formDataToSend.append('office', formData.value.office || '')
-          }
-          
-          // Update self via admin API using detected user type and id
-          const type = (userType.value || '').toLowerCase() // admin|deputy|head
-          const response = await adminAPI.updateUser(type, currentUser.id, formDataToSend)
-          
-          if (response.data.status === 'success') {
-            await Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: 'Profile updated successfully!',
-              confirmButtonColor: '#10b981'
-            })
-            
-            editMode.value = false
-            selectedFile.value = null
-            imagePreview.value = null
-            
-            if (response.data.data) {
-              const updatedUser = response.data.data
-              state.user = {
-                ...(state.user || {}),
-                ...updatedUser
-              }
-              if (updatedUser.image) {
-                profileImage.value = updatedUser.image.startsWith('http')
-                  ? updatedUser.image
-                  : `http://127.0.0.1:8000/storage/${updatedUser.image}`
-                setProfileImageUrl(updatedUser.image)
-              }
+
+          performanceStats.value = data.performance_stats || {}
+
+          // Update store so computed fullName reacts while preserving role and other fields
+          if (profileUser) {
+            const existing = state.user || {}
+            const roleFromApi = data.user_type || existing.role
+            state.user = {
+              ...existing,
+              ...profileUser,
+              role: roleFromApi || existing.role
             }
-            
-            await loadProfileData()
           }
-        } catch (error) {
-          console.error('Failed to update profile:', error)
-          
-          if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors
+        }
+      } catch (error) {
+        console.error('Failed to load profile data:', error)
+
+        if (user.value) {
+          formData.value = {
+            first_name: user.value.first_name || '',
+            middle_name: user.value.middle_name || '',
+            last_name: user.value.last_name || ''
           }
-          
-          const errorMessage = error.response?.data?.message || 'Failed to update profile. Please try again.'
-          
-          await Swal.fire({
-            icon: 'error',
-            title: 'Update Failed',
-            text: errorMessage,
-            confirmButtonColor: '#ef4444'
-          })
-        } finally {
-          saving.value = false
         }
       }
-  
-      const changePassword = async () => {
-        try {
-          changingPassword.value = true
-          passwordErrors.value = {}
-
-          // Validate password requirements
-          const passwordValidation = validatePassword(passwordData.value.new_password)
-          if (!passwordValidation.isValid) {
-            passwordErrors.value.new_password = passwordValidation.errors
-            return
-          }
-
-          // Validate password confirmation
-          if (passwordData.value.new_password !== passwordData.value.new_password_confirmation) {
-            passwordErrors.value.new_password_confirmation = ['Passwords do not match']
-            return
-          }
-
-          await adminAPI.changePassword(passwordData.value)
-
-          // Show success message with SweetAlert
+    }
+    
+    const saveProfile = async () => {
+      try {
+        saving.value = true
+        errors.value = {}
+        
+        const formDataToSend = new FormData()
+        // Only send fields that actually changed to avoid forcing inputs
+        const currentUser = user.value || {}
+        if (formData.value.first_name && formData.value.first_name !== currentUser.first_name) {
+          formDataToSend.append('first_name', formData.value.first_name)
+        }
+        if (formData.value.middle_name !== undefined && formData.value.middle_name !== currentUser.middle_name) {
+          formDataToSend.append('middle_name', formData.value.middle_name || '')
+        }
+        if (formData.value.last_name && formData.value.last_name !== currentUser.last_name) {
+          formDataToSend.append('last_name', formData.value.last_name)
+        }
+        
+        if (selectedFile.value) {
+          formDataToSend.append('image', selectedFile.value)
+        }
+        if (formData.value.email && formData.value.email !== currentUser.email) {
+          formDataToSend.append('email', formData.value.email)
+        }
+        if (formData.value.office !== undefined && formData.value.office !== currentUser.office) {
+          formDataToSend.append('office', formData.value.office || '')
+        }
+        
+        // Update self via admin API using detected user type and id
+        const type = (userType.value || '').toLowerCase() // admin|deputy|head
+        const response = await adminAPI.updateUser(type, currentUser.id, formDataToSend)
+        
+        if (response.data.status === 'success') {
           await Swal.fire({
             icon: 'success',
             title: 'Success!',
-            text: 'Password changed successfully',
-            confirmButtonText: 'OK'
+            text: 'Profile updated successfully!',
+            confirmButtonColor: '#10b981'
           })
-
-          passwordData.value = {
-            current_password: '',
-            new_password: '',
-            new_password_confirmation: ''
+          
+          editMode.value = false
+          selectedFile.value = null
+          imagePreview.value = null
+          
+          if (response.data.data) {
+            const updatedUser = response.data.data
+            state.user = {
+              ...(state.user || {}),
+              ...updatedUser
+            }
+            if (updatedUser.image) {
+              profileImage.value = updatedUser.image.startsWith('http')
+                ? updatedUser.image
+                : `http://127.0.0.1:8000/storage/${updatedUser.image}`
+              setProfileImageUrl(updatedUser.image)
+            }
           }
-        } catch (err) {
-          if (err.response?.status === 422) {
-            passwordErrors.value = err.response.data.errors
-          } else if (err.response?.data?.message) {
-            await Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: err.response.data.message,
-              confirmButtonText: 'OK'
-            })
-          } else {
-            await Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to change password',
-              confirmButtonText: 'OK'
-            })
-          }
-        } finally {
-          changingPassword.value = false
+          
+          await loadProfileData()
         }
-      }
-      
-      const cancelEdit = () => {
-        editMode.value = false
-        errors.value = {}
-        selectedFile.value = null
-        imagePreview.value = null
-        loadProfileData() // Reload original data
-      }
-      
-      const formatDate = (dateString) => {
-        if (!dateString) return 'N/A'
-        return new Date(dateString).toLocaleDateString('en-PH', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+      } catch (error) {
+        console.error('Failed to update profile:', error)
+        
+        if (error.response?.data?.errors) {
+          errors.value = error.response.data.errors
+        }
+        
+        const errorMessage = error.response?.data?.message || 'Failed to update profile. Please try again.'
+        
+        await Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: errorMessage,
+          confirmButtonColor: '#ef4444'
         })
-      }
-      
-      const formatDateTime = (dateString) => {
-        if (!dateString) return 'N/A'
-        return new Date(dateString).toLocaleString('en-PH', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
-      
-      onMounted(() => {
-        loadProfileData()
-      })
-      
-      return {
-        editMode,
-        saving,
-        changingPassword,
-        formData,
-        passwordData,
-        errors,
-        passwordErrors,
-        performanceStats,
-        recentActivity,
-        selectedFile,
-        imagePreview,
-        profileImage,
-        user,
-        fullName,
-        roleLabel,
-        userInitials,
-        onFileSelected,
-        removeImage,
-        saveProfile,
-        changePassword,
-        cancelEdit,
-        formatDate,
-        formatDateTime
+      } finally {
+        saving.value = false
       }
     }
+
+    const changePassword = async () => {
+      try {
+        changingPassword.value = true
+        passwordErrors.value = {}
+
+        // Validate password requirements using our utility
+        const passwordValidation = validatePassword(passwordData.value.new_password)
+        if (!passwordValidation.isValid) {
+          passwordErrors.value.new_password = passwordValidation.errors
+          return
+        }
+
+        // Validate password confirmation
+        if (passwordData.value.new_password !== passwordData.value.new_password_confirmation) {
+          passwordErrors.value.new_password_confirmation = ['Passwords do not match']
+          return
+        }
+
+        await adminAPI.changePassword(passwordData.value)
+
+        // Show success message with SweetAlert
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Password changed successfully',
+          confirmButtonText: 'OK'
+        })
+
+        // Reset password form
+        passwordData.value = {
+          current_password: '',
+          new_password: '',
+          new_password_confirmation: ''
+        }
+        
+        // Reset password visibility
+        showCurrentPassword.value = false
+        showNewPassword.value = false
+        showConfirmPassword.value = false
+        newPasswordStrength.value = ''
+        
+      } catch (err) {
+        if (err.response?.status === 422) {
+          passwordErrors.value = err.response.data.errors
+        } else if (err.response?.data?.message) {
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.response.data.message,
+            confirmButtonText: 'OK'
+          })
+        } else {
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to change password',
+            confirmButtonText: 'OK'
+          })
+        }
+      } finally {
+        changingPassword.value = false
+      }
+    }
+    
+    const cancelEdit = () => {
+      editMode.value = false
+      errors.value = {}
+      selectedFile.value = null
+      imagePreview.value = null
+      loadProfileData() // Reload original data
+    }
+    
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
+      return new Date(dateString).toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    }
+    
+    const formatDateTime = (dateString) => {
+      if (!dateString) return 'N/A'
+      return new Date(dateString).toLocaleString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+    
+    onMounted(() => {
+      loadProfileData()
+    })
+    
+    return {
+      editMode,
+      saving,
+      changingPassword,
+      formData,
+      passwordData,
+      errors,
+      passwordErrors,
+      performanceStats,
+      recentActivity,
+      selectedFile,
+      imagePreview,
+      profileImage,
+      user,
+      fullName,
+      roleLabel,
+      userInitials,
+      onFileSelected,
+      removeImage,
+      saveProfile,
+      changePassword,
+      cancelEdit,
+      formatDate,
+      formatDateTime,
+      showCurrentPassword,
+      showNewPassword,
+      showConfirmPassword,
+      newPasswordStrength,
+      isPasswordFormValid,
+      getPasswordStrengthClass,
+      getPasswordStrengthText
+    }
   }
-  </script>
+}
+</script>
   
   <style scoped>
   .enforcer-profile {
@@ -866,7 +1039,177 @@ import { validatePassword } from '@/utils/passwordValidation'
     animation: spin 1s linear infinite;
     margin-right: 8px;
   }
-  
+  .password-input-container {
+  position: relative;
+}
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input .form-input {
+  padding-right: 45px;
+}
+
+.password-input .form-input.password-weak {
+  border-color: #ef4444;
+}
+
+.password-input .form-input.password-medium {
+  border-color: #f59e0b;
+}
+
+.password-input .form-input.password-strong {
+  border-color: #10b981;
+}
+
+.password-input .form-input.password-match {
+  border-color: #10b981;
+}
+
+.password-input .form-input.password-mismatch {
+  border-color: #ef4444;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.password-strength {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-fill.password-weak {
+  background-color: #ef4444;
+}
+
+.strength-fill.password-medium {
+  background-color: #f59e0b;
+}
+
+.strength-fill.password-strong {
+  background-color: #10b981;
+}
+
+.strength-text {
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.strength-text.password-weak {
+  color: #ef4444;
+}
+
+.strength-text.password-medium {
+  color: #f59e0b;
+}
+
+.strength-text.password-strong {
+  color: #10b981;
+}
+
+.password-requirements {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.requirements-title {
+  font-weight: 500;
+  color: #374151;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.requirements-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.requirements-list li:last-child {
+  margin-bottom: 0;
+}
+
+.requirements-list li.requirement-met {
+  color: #10b981;
+}
+
+.requirement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.check-icon {
+  color: #10b981;
+}
+
+.x-icon {
+  color: #ef4444;
+}
+
+.password-match-indicator {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.match-success {
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.match-error {
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
   @keyframes spin {
     to {
       transform: rotate(360deg);

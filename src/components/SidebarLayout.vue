@@ -43,7 +43,7 @@
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
-              <span class="nav-text" v-if="!sidebarCollapsed">Manage Gov. Officials and Violators</span>
+              <span class="nav-text" v-if="!sidebarCollapsed">Manage POSU Officers and Violators</span>
               <svg 
                 class="arrow-icon" 
                 :class="{ open: showManageDropdown }" 
@@ -70,8 +70,8 @@
                     </svg>
                   </div>
                   <div class="dropdown-item-content">
-                    <span class="dropdown-item-title">Gov. Officials</span>
-                    <span class="dropdown-item-subtitle">Manage Gov. officials</span>
+                    <span class="dropdown-item-title">POSU Officers</span>
+                    <span class="dropdown-item-subtitle">Manage POSU Officers</span>
                   </div>
                   <div class="dropdown-item-indicator"></div>
                 </router-link>

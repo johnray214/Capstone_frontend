@@ -362,19 +362,87 @@
         </div>
       </div>
 
+      
+      <!-- Enhanced Password Field for the Edit Violator Modal -->
       <div class="form-group">
-        <label class="form-label">Password *</label>
-        <div class="password-input">
-          <input 
-            v-model="violatorForm.password" 
-            :type="showViolatorPassword ? 'text' : 'password'" 
-            class="form-input" 
-            placeholder="8+ chars, 1 uppercase, 1 number"
-          />
-          <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
-            <span v-if="showViolatorPassword">🙈</span>
-            <span v-else>👁️</span>
-          </button>
+        <label class="form-label">
+          Password 
+          <small class="text-muted">(Leave empty to keep current password)</small>
+        </label>
+        <div class="password-input-container">
+          <div class="password-input">
+            <input 
+              v-model="violatorForm.password" 
+              :type="showViolatorPassword ? 'text' : 'password'" 
+              class="form-input"
+              :class="{
+                'password-weak': passwordStrength === 'weak',
+                'password-medium': passwordStrength === 'medium', 
+                'password-strong': passwordStrength === 'strong',
+                'has-error': passwordErrors.length > 0
+              }"
+              placeholder="Enter new password (optional)"
+              autocomplete="new-password"
+            />
+            <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
+              <span v-if="showViolatorPassword">🙈</span>
+              <span v-else>👁️</span>
+            </button>
+          </div>
+          
+          <!-- Password Strength Indicator -->
+          <div v-if="violatorForm.password && passwordStrength" class="password-strength">
+            <div class="strength-bar">
+              <div 
+                class="strength-fill"
+                :class="getPasswordStrengthClass()"
+                :style="{ width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%' }"
+              ></div>
+            </div>
+            <span class="strength-text" :class="getPasswordStrengthClass()">
+              {{ getPasswordStrengthText() }}
+            </span>
+          </div>
+          
+          <!-- Password Requirements -->
+          <div v-if="violatorForm.password" class="password-requirements">
+            <small class="requirements-title">Password Requirements:</small>
+            <ul class="requirements-list">
+              <li 
+                v-for="requirement in getPasswordRequirements()" 
+                :key="requirement"
+                :class="{
+                  'requirement-met': violatorForm.password.length >= 8 && requirement.includes('8 characters'),
+                  'requirement-met': /[A-Z]/.test(violatorForm.password) && requirement.includes('uppercase'),
+                  'requirement-met': /[a-z]/.test(violatorForm.password) && requirement.includes('lowercase'),  
+                  'requirement-met': /\d/.test(violatorForm.password) && requirement.includes('number')
+                }"
+              >
+                <span class="requirement-icon">
+                  <svg v-if="
+                    (requirement.includes('8 characters') && violatorForm.password.length >= 8) ||
+                    (requirement.includes('uppercase') && /[A-Z]/.test(violatorForm.password)) ||
+                    (requirement.includes('lowercase') && /[a-z]/.test(violatorForm.password)) ||
+                    (requirement.includes('number') && /\d/.test(violatorForm.password))
+                  " class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                  <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </span>
+                {{ requirement }}
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Password Errors -->
+          <div v-if="passwordErrors.length > 0" class="password-errors">
+            <small v-for="error in passwordErrors" :key="error" class="error-text">
+              {{ error }}
+            </small>
+          </div>
         </div>
       </div>
           
@@ -392,10 +460,10 @@
 </div>
 </template>
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { adminAPI } from '@/services/api'
 import Swal from 'sweetalert2'
-import { validatePassword } from '@/utils/passwordValidation'
+import { validateOptionalPassword, getPasswordStrength, getPasswordRequirements } from '@/utils/passwordValidation'
 
 export default {
   name: 'ViolatorsManagement',
@@ -424,20 +492,24 @@ export default {
       city: '',
       province: '',
       password: '',
+      gender: '',
+      professional: ''
     });
 
     const savingViolator = ref(false);
+    const passwordStrength = ref('');
+    const passwordErrors = ref([]);
 
     const error = ref('')
     
     const violatorFilters = ref({
-    name: '',
-    address: '',
-    mobile_number: '',
-    gender: '',
-    professional: '',
-    license_number: ''
-  })
+      name: '',
+      address: '',
+      mobile_number: '',
+      gender: '',
+      professional: '',
+      license_number: ''
+    })
     
     const violatorPaginationData = ref({
       current_page: 1,
@@ -471,161 +543,213 @@ export default {
 
       return pages;
     })
+
+    // Watch password changes for real-time validation
+    watch(() => violatorForm.value.password, (newPassword) => {
+      if (newPassword) {
+        passwordStrength.value = getPasswordStrength(newPassword);
+        const validation = validateOptionalPassword(newPassword);
+        passwordErrors.value = validation.errors;
+      } else {
+        passwordStrength.value = '';
+        passwordErrors.value = [];
+      }
+    });
+
+    const getPasswordStrengthClass = () => {
+      switch (passwordStrength.value) {
+        case 'weak': return 'password-weak';
+        case 'medium': return 'password-medium';
+        case 'strong': return 'password-strong';
+        default: return '';
+      }
+    };
+
+    const getPasswordStrengthText = () => {
+      switch (passwordStrength.value) {
+        case 'weak': return 'Weak';
+        case 'medium': return 'Medium';
+        case 'strong': return 'Strong';
+        default: return '';
+      }
+    };
     
 
     const editViolator = (violator) => {
-  editingViolator.value = violator;
+      editingViolator.value = violator;
 
-  violatorForm.value = {
-    id: violator.id,
-    first_name: violator.first_name,
-    middle_name: violator.middle_name,
-    last_name: violator.last_name,
-    email: violator.email,
-    mobile_number: violator.mobile_number,
-    gender: violator.gender ? 1 : 0,
-    license_number: violator.license_number,
-    professional: violator.professional ? 1 : 0,
-    barangay: violator.barangay,
-    city: violator.city,
-    province: violator.province,
-  };
+      violatorForm.value = {
+        id: violator.id,
+        first_name: violator.first_name,
+        middle_name: violator.middle_name,
+        last_name: violator.last_name,
+        email: violator.email,
+        mobile_number: violator.mobile_number,
+        gender: violator.gender ? 1 : 0,
+        license_number: violator.license_number,
+        professional: violator.professional ? 1 : 0,
+        barangay: violator.barangay,
+        city: violator.city,
+        province: violator.province,
+        password: '' // Always start with empty password in edit mode
+      };
 
-  showEditViolatorModal.value = true;
-};
+      showEditViolatorModal.value = true;
+      // Reset password validation state
+      passwordStrength.value = '';
+      passwordErrors.value = [];
+    };
 
-const closeEditViolatorModal = () => {
-  showEditViolatorModal.value = false;
-  editingViolator.value = null;
-  violatorForm.value = {
-    id:'',
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    license_number: '',
-    mobile_number: '',
-    status: '',
-    barangay: '',
-    city: '',
-    province: ''
-  };
-};
+    const closeEditViolatorModal = () => {
+      showEditViolatorModal.value = false;
+      editingViolator.value = null;
+      violatorForm.value = {
+        id:'',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
+        license_number: '',
+        mobile_number: '',
+        barangay: '',
+        city: '',
+        province: '',
+        password: '',
+        gender: '',
+        professional: ''
+      };
+      // Reset password validation state
+      passwordStrength.value = '';
+      passwordErrors.value = [];
+      showViolatorPassword.value = false;
+    };
 
-const saveViolator = async () => {
-  savingViolator.value = true;
-  try {
-    // Validate password if provided
-    if (violatorForm.value.password && violatorForm.value.password.trim() !== '') {
-      const passwordValidation = validatePassword(violatorForm.value.password.trim())
-      if (!passwordValidation.isValid) {
-        Swal.fire("Error", passwordValidation.errors.join(', '), "error")
-        savingViolator.value = false
-        return
+    const saveViolator = async () => {
+      savingViolator.value = true;
+      try {
+        // Validate password if provided
+        const passwordValidation = validateOptionalPassword(violatorForm.value.password);
+        
+        if (!passwordValidation.isValid) {
+          Swal.fire({
+            icon: "error",
+            title: "Invalid Password",
+            html: passwordValidation.errors.join('<br>'),
+            showConfirmButton: true
+          });
+          savingViolator.value = false;
+          return;
+        }
+
+        const payload = { ...violatorForm.value };
+        
+        // Only include password in payload if it's provided and valid
+        if (violatorForm.value.password && violatorForm.value.password.trim() !== '') {
+          payload.password = violatorForm.value.password.trim();
+        } else {
+          // Remove password from payload if it's empty (keep current password)
+          delete payload.password;
+        }
+
+        const response = await adminAPI.updateViolator(payload);
+
+        if (response.data.status === 'success') {
+          await loadViolators(violatorPaginationData.value.current_page);
+          closeEditViolatorModal();
+          Swal.fire({
+            icon: 'success',
+            title: 'Updated',
+            text: 'Violator updated successfully',
+            timer: 1500,
+            showConfirmButton: true
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error', 
+          text: err.response?.data?.message || 'Failed to update violator' 
+        });
+      } finally {
+        savingViolator.value = false;
       }
-      // Only include password in payload if it's provided and valid
-      violatorForm.value.password = violatorForm.value.password.trim()
-    } else {
-      // Remove password from payload if it's empty (keep current password)
-      delete violatorForm.value.password
-    }
-
-    const payload = { ...violatorForm.value };
-    const response = await adminAPI.updateViolator(payload);
-
-    if (response.data.status === 'success') {
-      await loadViolators(violatorPaginationData.value.current_page);
-      closeEditViolatorModal();
-      Swal.fire({
-        icon: 'success',
-        title: 'Updated',
-        text: 'Violator updated successfully',
-        timer: 1500,
-        showConfirmButton: true
-      });
-    }
-  } catch (err) {
-    console.error(err);
-    Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update violator' });
-  } finally {
-    savingViolator.value = false;
-  }
-};
+    };
     
     const loadViolators = async (page = 1) => {
-  loadingViolators.value = true;
-  try {
-    const params = {
-      page,
-      per_page: violatorPerPage.value,
-      ...violatorFilters.value
+      loadingViolators.value = true;
+      try {
+        const params = {
+          page,
+          per_page: violatorPerPage.value,
+          ...violatorFilters.value
+        };
+        const response = await adminAPI.getViolators(params);
+        
+        if (response.data.status === "success") {
+          violators.value = response.data.data.data;
+          violatorPaginationData.value = {
+            current_page: response.data.data.current_page,
+            last_page: response.data.data.last_page,
+            per_page: response.data.data.per_page,
+            total: response.data.data.total,
+            from: response.data.data.from,
+            to: response.data.data.to
+          };
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        loadingViolators.value = false;
+      }
     };
-    const response = await adminAPI.getViolators(params);
-    
-    if (response.data.status === "success") {
-      violators.value = response.data.data.data;
-      violatorPaginationData.value = {
-        current_page: response.data.data.current_page,
-        last_page: response.data.data.last_page,
-        per_page: response.data.data.per_page,
-        total: response.data.data.total,
-        from: response.data.data.from,
-        to: response.data.data.to
-      };
-    }
-  } catch (err) {
-    console.error(err);
-  } finally {
-    loadingViolators.value = false;
-  }
-};
 
-const filteredViolators = computed(() => {
-  let base = Array.isArray(violators.value) ? violators.value : []
-  let filtered = base.filter(v => !!v)
+    const filteredViolators = computed(() => {
+      let base = Array.isArray(violators.value) ? violators.value : []
+      let filtered = base.filter(v => !!v)
 
-  if (violatorFilters.value.name) {
-    const search = violatorFilters.value.name.toLowerCase()
-    filtered = filtered.filter(v => {
-      const fn = v.first_name?.toLowerCase() || ''
-      const ln = v.last_name?.toLowerCase() || ''
-      return fn.includes(search) || ln.includes(search)
+      if (violatorFilters.value.name) {
+        const search = violatorFilters.value.name.toLowerCase()
+        filtered = filtered.filter(v => {
+          const fn = v.first_name?.toLowerCase() || ''
+          const ln = v.last_name?.toLowerCase() || ''
+          return fn.includes(search) || ln.includes(search)
+        })
+      }
+
+      if (violatorFilters.value.address) {
+        const addr = violatorFilters.value.address.toLowerCase()
+        filtered = filtered.filter(v => {
+          const fullAddr = `${v.barangay || ''} ${v.city || ''} ${v.province || ''}`.toLowerCase()
+          return fullAddr.includes(addr)
+        })
+      }
+
+      if (violatorFilters.value.mobile_number) {
+        const mobile = violatorFilters.value.mobile_number.toLowerCase()
+        filtered = filtered.filter(v => 
+          v.mobile_number?.toLowerCase().includes(mobile)
+        )
+      }
+
+      if (violatorFilters.value.gender !== '') {
+        filtered = filtered.filter(v => String(v.gender) === String(violatorFilters.value.gender))
+      }
+
+      if (violatorFilters.value.professional !== '') {
+        filtered = filtered.filter(v => String(v.professional) === String(violatorFilters.value.professional))
+      }
+
+      if (violatorFilters.value.license_number) {
+        const lic = violatorFilters.value.license_number.toLowerCase()
+        filtered = filtered.filter(v => v.license_number?.toLowerCase().includes(lic))
+      }
+
+      return filtered
     })
-  }
 
-  if (violatorFilters.value.address) {
-    const addr = violatorFilters.value.address.toLowerCase()
-    filtered = filtered.filter(v => {
-      const fullAddr = `${v.barangay || ''} ${v.city || ''} ${v.province || ''}`.toLowerCase()
-      return fullAddr.includes(addr)
-    })
-  }
-
-  if (violatorFilters.value.mobile_number) {
-    const mobile = violatorFilters.value.mobile_number.toLowerCase()
-    filtered = filtered.filter(v => 
-      v.mobile_number?.toLowerCase().includes(mobile)
-    )
-  }
-
-  if (violatorFilters.value.gender !== '') {
-    filtered = filtered.filter(v => String(v.gender) === String(violatorFilters.value.gender))
-  }
-
-  if (violatorFilters.value.professional !== '') {
-    filtered = filtered.filter(v => String(v.professional) === String(violatorFilters.value.professional))
-  }
-
-  if (violatorFilters.value.license_number) {
-    const lic = violatorFilters.value.license_number.toLowerCase()
-    filtered = filtered.filter(v => v.license_number?.toLowerCase().includes(lic))
-  }
-
-  return filtered
-})
-
-const paginatedViolators = computed(() => {
-  return filteredViolators.value; 
-});
+    const paginatedViolators = computed(() => {
+      return filteredViolators.value; 
+    });
     
 
     const viewViolatorDetails = (violator) => {
@@ -640,88 +764,88 @@ const paginatedViolators = computed(() => {
 
 
     const archiveViolator = async (violator) => {
-  const result = await Swal.fire({
-    title: 'Archive Violator?',
-    html: `Are you sure you want to archive <strong>${violator.first_name} ${violator.last_name}</strong>?<br><br>
-           Archived violators can be restored later from the Archives page.`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, archive',
-    cancelButtonText: 'Cancel',
-    confirmButtonColor: '#dc2626',
-    iconColor:'#dc2626'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      await adminAPI.archiveViolator(violator.id);
-      await loadViolators(violatorPaginationData.value.current_page);
-
-      Swal.fire({
-        title: 'Archived',
-        text: 'Violator has been archived successfully.',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: true
+      const result = await Swal.fire({
+        title: 'Archive Violator?',
+        html: `Are you sure you want to archive <strong>${violator.first_name} ${violator.last_name}</strong>?<br><br>
+               Archived violators can be restored later from the Archives page.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc2626',
+        iconColor:'#dc2626'
       });
-    } catch (error) {
-      console.error('Failed to archive violator:', error);
-      Swal.fire({
-        title: 'Archive failed',
-        text: 'Could not archive violator. Please try again.',
-        icon: 'error'
-      });
-    }
-  }
-};
+
+      if (result.isConfirmed) {
+        try {
+          await adminAPI.archiveViolator(violator.id);
+          await loadViolators(violatorPaginationData.value.current_page);
+
+          Swal.fire({
+            title: 'Archived',
+            text: 'Violator has been archived successfully.',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: true
+          });
+        } catch (error) {
+          console.error('Failed to archive violator:', error);
+          Swal.fire({
+            title: 'Archive failed',
+            text: 'Could not archive violator. Please try again.',
+            icon: 'error'
+          });
+        }
+      }
+    };
 
 
-const goToViolatorPage = async (page) => {
-  if (page < 1 || page > violatorPaginationData.value.last_page) return
-  
-  try {
-    loadingViolators.value = true
-    const params = {
-      page: page,
-      per_page: violatorPerPage.value,
-      ...violatorFilters.value
-    }
-    
-    const response = await adminAPI.getViolators(params)
-    
-    if (response.data.status === 'success') {
-      violators.value = response.data.data.data
-      violatorPaginationData.value = {
-        current_page: response.data.data.current_page,
-        last_page: response.data.data.last_page,
-        per_page: response.data.data.per_page,
-        total: response.data.data.total,
-        from: response.data.data.from,
-        to: response.data.data.to
+    const goToViolatorPage = async (page) => {
+      if (page < 1 || page > violatorPaginationData.value.last_page) return
+      
+      try {
+        loadingViolators.value = true
+        const params = {
+          page: page,
+          per_page: violatorPerPage.value,
+          ...violatorFilters.value
+        }
+        
+        const response = await adminAPI.getViolators(params)
+        
+        if (response.data.status === 'success') {
+          violators.value = response.data.data.data
+          violatorPaginationData.value = {
+            current_page: response.data.data.current_page,
+            last_page: response.data.data.last_page,
+            per_page: response.data.data.per_page,
+            total: response.data.data.total,
+            from: response.data.data.from,
+            to: response.data.data.to
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load violators page:', error)
+      } finally {
+        loadingViolators.value = false
       }
     }
-  } catch (error) {
-    console.error('Failed to load violators page:', error)
-  } finally {
-    loadingViolators.value = false
-  }
-}
 
-const changeViolatorPerPage = async () => {
-  violatorPaginationData.value.current_page = 1
-  await goToViolatorPage(1)
-}
+    const changeViolatorPerPage = async () => {
+      violatorPaginationData.value.current_page = 1
+      await goToViolatorPage(1)
+    }
 
-const formatDateTime = (dateString) => {
-  if (!dateString) return null
-  return new Date(dateString).toLocaleString('en-PH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+    const formatDateTime = (dateString) => {
+      if (!dateString) return null
+      return new Date(dateString).toLocaleString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
     
     const getAttemptClass = (count) => {
       if (!count || count <= 1) return 'attempt-first'
@@ -737,8 +861,6 @@ const formatDateTime = (dateString) => {
       if (count === 3) return "3rd Attempt"
       return `${count}th Attempt`
     }
-     
-    
     
     const formatDate = (dateString) => {
       if (!dateString) return null
@@ -750,14 +872,13 @@ const formatDateTime = (dateString) => {
     }
     
     const formatCurrency = (amount) => {
-  if (amount == null || isNaN(amount)) return "0.00";
-  return new Intl.NumberFormat("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(parseFloat(amount));
-};
+      if (amount == null || isNaN(amount)) return "0.00";
+      return new Intl.NumberFormat("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(parseFloat(amount));
+    };
 
-    
     const getInitials = (firstName, lastName) => {
       return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
     }
@@ -766,8 +887,45 @@ const formatDateTime = (dateString) => {
       loadViolators()
     })
     
-    return {loading,loadingViolators,saving,activeTab,violators,paginatedViolators,violatorFilters,violatorPaginationData,violatorPerPage,visibleViolatorPages,saveViolator,error,viewViolatorDetails,closeViolatorDetailsModal,showViolatorDetailsModal,selectedViolator,archiveViolator,goToViolatorPage,changeViolatorPerPage,getAttemptClass,formatAttempt,formatDate,formatDateTime,formatCurrency,getInitials,editViolator,showEditViolatorModal,violatorForm,closeEditViolatorModal,savingViolator,
-    showViolatorPassword}
+    return {
+      loading,
+      loadingViolators,
+      saving,
+      activeTab,
+      violators,
+      paginatedViolators,
+      violatorFilters,
+      violatorPaginationData,
+      violatorPerPage,
+      visibleViolatorPages,
+      saveViolator,
+      error,
+      viewViolatorDetails,
+      closeViolatorDetailsModal,
+      showViolatorDetailsModal,
+      selectedViolator,
+      archiveViolator,
+      goToViolatorPage,
+      changeViolatorPerPage,
+      getAttemptClass,
+      formatAttempt,
+      formatDate,
+      formatDateTime,
+      formatCurrency,
+      getInitials,
+      editViolator,
+      showEditViolatorModal,
+      violatorForm,
+      closeEditViolatorModal,
+      savingViolator,
+      showViolatorPassword,
+      passwordStrength,
+      passwordErrors,
+      getPasswordStrengthClass,
+      getPasswordStrengthText,
+      getPasswordRequirements,
+      loadViolators: () => loadViolators()
+    }
   }
 }
 </script>
@@ -1417,7 +1575,165 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
   color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
+.password-input-container {
+  position: relative;
+}
 
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input .form-input {
+  padding-right: 45px;
+}
+
+.password-input .form-input.password-weak {
+  border-color: #ef4444;
+}
+
+.password-input .form-input.password-medium {
+  border-color: #f59e0b;
+}
+
+.password-input .form-input.password-strong {
+  border-color: #10b981;
+}
+
+.password-input .form-input.has-error {
+  border-color: #ef4444;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.password-strength {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-fill.password-weak {
+  background-color: #ef4444;
+}
+
+.strength-fill.password-medium {
+  background-color: #f59e0b;
+}
+
+.strength-fill.password-strong {
+  background-color: #10b981;
+}
+
+.strength-text {
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.strength-text.password-weak {
+  color: #ef4444;
+}
+
+.strength-text.password-medium {
+  color: #f59e0b;
+}
+
+.strength-text.password-strong {
+  color: #10b981;
+}
+
+.password-requirements {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.requirements-title {
+  font-weight: 500;
+  color: #374151;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.requirements-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.requirements-list li:last-child {
+  margin-bottom: 0;
+}
+
+.requirements-list li.requirement-met {
+  color: #10b981;
+}
+
+.requirement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.check-icon {
+  color: #10b981;
+}
+
+.x-icon {
+  color: #ef4444;
+}
+
+.password-errors {
+  margin-top: 8px;
+}
+
+.error-text {
+  display: block;
+  color: #ef4444;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-weight: normal;
+}
 .btn-icon-sm.btn-success:hover {
   background: #bbf7d0;
 }

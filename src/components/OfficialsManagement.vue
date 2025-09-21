@@ -1,8 +1,8 @@
 <template>
   <header class="dashboard-header">
         <div class="header-content">
-          <h1>Officials Management</h1>
-          <p>Manage Government Officials</p>
+          <h1>POSU Officers Management</h1>
+          <p>Manage POSU Officers</p>
         </div>
         <button class="refresh-btn" @click="loadUsers" aria-label="Refresh Dashboard">
           <svg 
@@ -261,7 +261,7 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">Email *</label>
+              <label class="form-label">Email (optional)</label>
               <input v-model="userForm.email" type="email" class="form-input" />
             </div>
             
@@ -296,18 +296,104 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">Password</label>
-              <div class="password-input">
-                <input 
-                  v-model="userForm.password" 
-                  :type="showPassword ? 'text' : 'password'"
-                  class="form-input" 
-                  :placeholder="showEditModal ? 'Leave blank to keep current password' : '8+ chars, 1 uppercase, 1 number'"
-                />
-                <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-                  <span v-if="showPassword">🙈</span>
-                  <span v-else>👁️</span>
-                </button>
+              <label class="form-label">
+                Password {{ showEditModal ? '' : '*' }}
+                <small v-if="showEditModal" class="text-muted">(Leave empty to keep current password)</small>
+              </label>
+              <div class="password-input-container">
+                <div class="password-input">
+                  <input 
+                    v-model="userForm.password" 
+                    :type="showPassword ? 'text' : 'password'"
+                    class="form-input"
+                    :class="{
+                      'password-weak': passwordStrength === 'weak',
+                      'password-medium': passwordStrength === 'medium',
+                      'password-strong': passwordStrength === 'strong',
+                      'has-error': passwordErrors.length > 0
+                    }"
+                    :placeholder="showEditModal ? 'Leave blank to keep current password' : 'Enter a secure password'"
+                    :required="!showEditModal"
+                    autocomplete="new-password"
+                  />
+                  <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                    <span v-if="showPassword">🙈</span>
+                    <span v-else>👁️</span>
+                  </button>
+                </div>
+                
+                <!-- Password Strength Indicator -->
+                <div v-if="userForm.password && passwordStrength" class="password-strength">
+                  <div class="strength-bar">
+                    <div 
+                      class="strength-fill"
+                      :class="getPasswordStrengthClass()"
+                      :style="{ width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%' }"
+                    ></div>
+                  </div>
+                </div>
+                
+                <!-- Password Requirements -->
+                <div v-if="userForm.password" class="password-requirements">
+                  <small class="requirements-title">Password Requirements:</small>
+                  <ul class="requirements-list">
+                    <li :class="{ 'requirement-met': userForm.password.length >= 8 }">
+                      <span class="requirement-icon">
+                        <svg v-if="userForm.password.length >= 8" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least 8 characters long
+                    </li>
+                    <li :class="{ 'requirement-met': /[A-Z]/.test(userForm.password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/[A-Z]/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one uppercase letter (A-Z)
+                    </li>
+                    <li :class="{ 'requirement-met': /[a-z]/.test(userForm.password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/[a-z]/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one lowercase letter (a-z)
+                    </li>
+                    <li :class="{ 'requirement-met': /\d/.test(userForm.password) }">
+                      <span class="requirement-icon">
+                        <svg v-if="/\d/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                      At least one number (0-9)
+                    </li>
+                  </ul>
+                </div>
+                
+                <!-- Password Errors -->
+                <div v-if="passwordErrors.length > 0" class="password-errors">
+                  <small v-for="error in passwordErrors" :key="error" class="error-text">
+                    {{ error }}
+                  </small>
+                </div>
               </div>
             </div>
 
@@ -328,7 +414,11 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { adminAPI } from "@/services/api"
 import Swal from "sweetalert2"
-import { validatePassword } from "@/utils/passwordValidation"
+import { 
+  getPasswordStrength, 
+  validatePasswordForSave,
+  validateOptionalPassword
+} from "@/utils/passwordValidation"
 
 export default {
   name: "OfficialsManagement",
@@ -344,7 +434,9 @@ export default {
     const showEditModal = ref(false)
     const editingUser = ref(null)
     const showPassword = ref(false)
-    
+    const passwordStrength = ref("")
+    const passwordErrors = ref([])
+
     // Pagination data
     const paginationData = ref({
       current_page: 1,
@@ -378,17 +470,31 @@ export default {
       return []
     })
 
+    // Password strength helpers
+    const getPasswordStrengthClass = () => {
+      return `password-${passwordStrength.value}`
+    }
+
+    const getPasswordStrengthText = () => {
+      switch (passwordStrength.value) {
+        case 'weak': return 'Weak'
+        case 'medium': return 'Medium'
+        case 'strong': return 'Strong'
+        default: return ''
+      }
+    }
+
     const loadUsers = async (page = 1) => {
       loading.value = true
       try {
         const params = {
-          page: page,
+          page,
           per_page: perPage.value,
           ...userFilters.value
         }
         const res = await adminAPI.getUsers(params)
-        
-        if (res.data.status === 'success') {
+
+        if (res.data.status === "success") {
           users.value = res.data.data.data
           paginationData.value = {
             current_page: res.data.data.current_page,
@@ -404,69 +510,90 @@ export default {
       }
     }
 
-    // Remove client-side filtering since we're using server-side pagination
+    // Client-side filtering removed (server-side only)
     const filteredUsers = computed(() => users.value)
 
     const saveUser = async () => {
-    saving.value = true
-    try {
-      let payload = { ...userForm.value }
+      saving.value = true
+      try {
+        let payload = { ...userForm.value }
 
-      // Validate password if provided (for new users or when updating password)
-      if (userForm.value.password && userForm.value.password.trim() !== '') {
-        const passwordValidation = validatePassword(userForm.value.password.trim())
-        if (!passwordValidation.isValid) {
-          Swal.fire("Error", passwordValidation.errors.join(', '), "error")
+        // Enhanced password validation
+        if (userForm.value.password && userForm.value.password.trim() !== "") {
+          const passwordValidation = showEditModal.value 
+            ? validateOptionalPassword(userForm.value.password.trim())
+            : validatePasswordForSave(userForm.value.password.trim())
+            
+          if (!passwordValidation.isValid) {
+            passwordErrors.value = passwordValidation.errors
+            Swal.fire({
+              icon: "error",
+              title: "Invalid Password",
+              html: passwordValidation.errors.join('<br>'),
+              showConfirmButton: true
+            })
+            saving.value = false
+            return
+          }
+          payload.password = userForm.value.password.trim()
+        } else if (showEditModal.value) {
+          // Keep old password when editing
+          delete payload.password
+        } else {
+          // Password is required for new users
+          passwordErrors.value = ['Password is required']
+          Swal.fire("Error", "Password is required for new users", "error")
           saving.value = false
           return
         }
-        // Only include password in payload if it's provided and valid
-        payload.password = userForm.value.password.trim()
-      } else if (showEditModal.value) {
-        // When editing, remove password from payload if it's empty (keep current password)
-        delete payload.password
-      }
 
-      if (normalizedRole.value === "admin") {
-        payload.user_type = "enforcer"
-      } else if (normalizedRole.value === "deputy") {
-        if (!userForm.value.user_type) {
-          Swal.fire("Error", "Please select a role", "error")
-          saving.value = false
-          return
+        // Reset password errors if validation passes
+        passwordErrors.value = []
+
+        // Assign user_type based on role
+        if (normalizedRole.value === "admin") {
+          payload.user_type = "enforcer"
+        } else if (normalizedRole.value === "deputy" || normalizedRole.value === "head") {
+          if (!userForm.value.user_type) {
+            Swal.fire("Error", "Please select a role", "error")
+            saving.value = false
+            return
+          }
+          payload.user_type = userForm.value.user_type.toLowerCase()
         }
-        payload.user_type = userForm.value.user_type.toLowerCase()
-      } else if (normalizedRole.value === "head") {
-        if (!userForm.value.user_type) {
-          Swal.fire("Error", "Please select a role", "error")
-          saving.value = false
-          return
+
+        let res
+        if (showEditModal.value) {
+          res = await adminAPI.updateUser(editingUser.value.user_type, editingUser.value.id, payload)
+        } else {
+          res = await adminAPI.createUser(payload)
         }
-        payload.user_type = userForm.value.user_type.toLowerCase()
-      }
 
-      let res
-      if (showEditModal.value) {
-        res = await adminAPI.updateUser(editingUser.value.user_type, editingUser.value.id, payload)
-      } else {
-        res = await adminAPI.createUser(payload)
+        if (res.data.status === "success") {
+          await loadUsers()
+          closeModals()
+          Swal.fire("Success", `User ${showEditModal.value ? "updated" : "created"} successfully!`, "success")
+        }
+      } catch (e) {
+        console.error("Error saving user:", e)
+        const errors = e.response?.data?.errors
+        if (errors) {
+          const errorMessages = Object.values(errors).flat().join('<br>')
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            html: errorMessages,
+            showConfirmButton: true
+          })
+        } else {
+          Swal.fire("Error", e.response?.data?.message || "Failed to save user", "error")
+        }
+      } finally {
+        saving.value = false
       }
-
-      if (res.data.status === "success") {
-        await loadUsers()
-        closeModals()
-        Swal.fire("Success", `User ${showEditModal.value ? 'updated' : 'created'} successfully!`, "success")
-      }
-    } catch (e) {
-      console.error("Error saving user:", e)
-      const errorMessage = e.response?.data?.message
-      Swal.fire("Error", errorMessage, "error")
-    } finally {
-      saving.value = false
     }
-      }
 
-    const editUser = user => {
+    const editUser = (user) => {
       editingUser.value = user
       userForm.value = {
         first_name: user.first_name || "",
@@ -477,23 +604,25 @@ export default {
         office: user.office || "",
         status: user.status || "active",
         password: "",
-        user_type: user.user_type || "",
+        user_type: user.user_type || ""
       }
       showEditModal.value = true
+      passwordStrength.value = ""
+      passwordErrors.value = []
     }
 
     const toggleUserStatus = async (user) => {
-      const newStatus = user.status === 'active' ? 'deactivate' : 'active';
-      const actionWord = newStatus === 'active' ? 'activate' : 'deactivate'
+      const newStatus = user.status === "active" ? "deactivate" : "active"
+      const actionWord = newStatus === "active" ? "activate" : "deactivate"
 
       const result = await Swal.fire({
         title: `${actionWord.charAt(0).toUpperCase() + actionWord.slice(1)} user?`,
         text: `Do you want to ${actionWord} ${user.first_name} ${user.last_name}?`,
-        icon: 'question',
+        icon: "question",
         showCancelButton: true,
-        confirmButtonColor: newStatus === 'active' ? '#10b981' : '#ef4444',
-        cancelButtonText: 'Cancel',
-        confirmButtonText: `Yes, ${actionWord}`,
+        confirmButtonColor: newStatus === "active" ? "#10b981" : "#ef4444",
+        cancelButtonText: "Cancel",
+        confirmButtonText: `Yes, ${actionWord}`
       })
 
       if (!result.isConfirmed) return
@@ -501,43 +630,42 @@ export default {
       await adminAPI.changeUserStatus({
         id: user.id,
         status: newStatus,
-        user_type: user.user_type,
-      });
-      await loadUsers();
-      Swal.fire('Success', `User ${actionWord}d successfully!`, 'success');
-    };
-
+        user_type: user.user_type
+      })
+      await loadUsers()
+      Swal.fire("Success", `User ${actionWord}d successfully!`, "success")
+    }
 
     const deleteUser = async (user) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: `Do you really want to delete ${user.first_name} ${user.last_name}?`,
-      icon: 'warning',
-      showCancelButton: true,
-      iconColor: '#d33',
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'Yes, archive!',
-      cancelButtonText: 'Cancel'
-    });
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: `Do you really want to delete ${user.first_name} ${user.last_name}?`,
+        icon: "warning",
+        showCancelButton: true,
+        iconColor: "#d33",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Yes, archive!",
+        cancelButtonText: "Cancel"
+      })
 
-    if (result.isConfirmed) {
+      if (!result.isConfirmed) return
+
       try {
-        await adminAPI.archiveUser(user.user_type, user.id);
-        Swal.fire("Success", `User deleted successfully!`, "success");
-        await loadUsers();
+        await adminAPI.archiveUser(user.user_type, user.id)
+        Swal.fire("Success", "User deleted successfully!", "success")
+        await loadUsers()
       } catch (e) {
-        console.error(e);
-        Swal.fire("Error", "Failed to archive user.", "error");
+        console.error(e)
+        Swal.fire("Error", "Failed to archive user.", "error")
       }
     }
-  };
 
     const closeModals = () => {
       showCreateModal.value = false
       showEditModal.value = false
       editingUser.value = null
       saving.value = false
-      
+
       userForm.value = {
         first_name: "",
         last_name: "",
@@ -547,58 +675,66 @@ export default {
         office: "",
         status: "active",
         password: "",
-        user_type: "",
+        user_type: ""
       }
+      passwordStrength.value = ""
+      passwordErrors.value = []
+      showPassword.value = false
     }
-    
-    // Pagination functions
+
+    // Pagination
     const goToPage = async (page) => {
       if (page < 1 || page > paginationData.value.last_page) return
       await loadUsers(page)
     }
-    
+
     const changePerPage = async () => {
       paginationData.value.current_page = 1
       await loadUsers(1)
     }
-    
-    // Computed property for visible pages
+
     const visiblePages = computed(() => {
       const current = paginationData.value.current_page
       const last = paginationData.value.last_page
       const pages = []
-      
-      // Show pages around current page
+
       const start = Math.max(1, current - 2)
       const end = Math.min(last, current + 2)
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i)
       }
-      
       return pages
     })
 
-    const getInitials = (firstName, lastName) => {
-      return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
-    }
+    const getInitials = (firstName, lastName) =>
+      `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase()
 
     const formatDateTime = (dateString) => {
       if (!dateString) return null
-      return new Date(dateString).toLocaleString('en-PH', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return new Date(dateString).toLocaleString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
       })
     }
 
-    // Watch for filter changes and reload data
+    // Watch password for strength indicator
+    watch(() => userForm.value.password, (newPass) => {
+      passwordStrength.value = getPasswordStrength(newPass)
+      // Clear password errors when user starts typing
+      if (passwordErrors.value.length > 0) {
+        passwordErrors.value = []
+      }
+    })
+
+    // Watch filters to reload data
     watch(userFilters, () => {
-      loadUsers(1) // Reset to first page when filters change
+      loadUsers(1)
     }, { deep: true })
-    
+
     onMounted(loadUsers)
 
     return {
@@ -610,6 +746,8 @@ export default {
       visiblePages,
       userForm,
       showPassword,
+      passwordStrength,
+      passwordErrors,
       userFilters,
       allowedRoles,
       filteredUsers,
@@ -624,7 +762,10 @@ export default {
       changePerPage,
       getInitials,
       formatDateTime,
-      normalizedRole
+      normalizedRole,
+      getPasswordStrengthClass,
+      getPasswordStrengthText,
+      loadUsers: () => loadUsers()
     }
   }
 }
@@ -818,6 +959,219 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
   color: white;
 }
 
+/* Password strength indicator styles */
+.input-wrapper {
+  position: relative;
+}
+
+.toggle-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 4px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-strength {
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+  display: block;
+}
+
+.strength-text.weak {
+  color: #ef4444;
+}
+
+.strength-text.medium {
+  color: #f59e0b;
+}
+
+.strength-text.strong {
+  color: #10b981;
+}
+.password-input-container {
+  position: relative;
+}
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input .form-input {
+  padding-right: 45px;
+}
+
+.password-input .form-input.password-weak {
+  border-color: #ef4444;
+}
+
+.password-input .form-input.password-medium {
+  border-color: #f59e0b;
+}
+
+.password-input .form-input.password-strong {
+  border-color: #10b981;
+}
+
+.password-input .form-input.has-error {
+  border-color: #ef4444;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.password-strength {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-fill.password-weak {
+  background-color: #ef4444;
+}
+
+.strength-fill.password-medium {
+  background-color: #f59e0b;
+}
+
+.strength-fill.password-strong {
+  background-color: #10b981;
+}
+
+.strength-text {
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.strength-text.password-weak {
+  color: #ef4444;
+}
+
+.strength-text.password-medium {
+  color: #f59e0b;
+}
+
+.strength-text.password-strong {
+  color: #10b981;
+}
+
+.password-requirements {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.requirements-title {
+  font-weight: 500;
+  color: #374151;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.requirements-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.requirements-list li:last-child {
+  margin-bottom: 0;
+}
+
+.requirements-list li.requirement-met {
+  color: #10b981;
+}
+
+.requirement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.check-icon {
+  color: #10b981;
+}
+
+.x-icon {
+  color: #ef4444;
+}
+
+.password-errors {
+  margin-top: 8px;
+}
+
+.error-text {
+  display: block;
+  color: #ef4444;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-weight: normal;
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
