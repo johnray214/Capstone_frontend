@@ -173,8 +173,8 @@
         </div>
       </div>
 
-      <!-- Success/Error Messages -->
-      <div v-if="message" class="message" :class="messageType">
+      <!-- Error Messages (Success messages now handled by SweetAlert) -->
+      <div v-if="message && messageType === 'error'" class="message" :class="messageType">
         {{ message }}
       </div>
     </div>
@@ -185,7 +185,8 @@
 import { ref, computed, onMounted } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { useAuthStore } from '@/stores/auth'
-import { violatorAPI } from '@/services/api/' 
+import { violatorAPI } from '@/services/api/'
+import Swal from 'sweetalert2' 
 
 const { state } = useAuthStore()
 const user = computed(() => state.user)
@@ -285,8 +286,13 @@ const changePassword = async () => {
 
     await violatorAPI.changePassword(passwordData.value)
 
-    message.value = 'Password changed successfully'
-    messageType.value = 'success'
+    // Show success message with SweetAlert
+    await Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: 'Password changed successfully',
+      confirmButtonText: 'OK'
+    })
 
     passwordData.value = {
       current_password: '',

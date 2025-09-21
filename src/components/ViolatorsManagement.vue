@@ -214,7 +214,7 @@
 
             <div class="per-page-selector">
               <label>Show:</label>
-              <select v-model="violatorPerPage" @change="changePerPage">
+              <select v-model="violatorPerPage" @change="changeViolatorPerPage">
                 <option value="15">15</option>
                 <option value="25">25</option>
                 <option value="50">50</option>

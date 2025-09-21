@@ -473,7 +473,7 @@ export default {
     // Filter states
     const selectedPeriod = ref('month')
     const selectedChartPeriod = ref('monthly')
-    const performanceTarget = ref(30)
+    const performanceTarget = ref(parseInt(localStorage.getItem('admin_performance_target')) || 30)
     const newTarget = ref(5)
     const showEditTargetModal = ref(false)
     const selectedYear = ref(new Date().getFullYear())
@@ -778,6 +778,7 @@ export default {
     
     const updateTarget = () => {
       performanceTarget.value = parseInt(newTarget.value) || 5
+      localStorage.setItem('admin_performance_target', performanceTarget.value.toString())
       showEditTargetModal.value = false
     }
     

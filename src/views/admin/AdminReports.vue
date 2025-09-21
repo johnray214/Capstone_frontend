@@ -286,14 +286,102 @@
               
               <div class="preview-content">
                 <div class="content-tabs">
+                  <button @click="activeTab = 'preview'" 
+                          :class="['tab-btn', { active: activeTab === 'preview' }]">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Preview Files
+                  </button>
                   <button @click="activeTab = 'summary'" 
                           :class="['tab-btn', { active: activeTab === 'summary' }]">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M9 19c-5 0-6-3-6-3s1-3 6-3 6 3 6 3-1 3-6 3z"></path>
+                      <path d="M9 19c0 0-1-1-1-3s1-3 1-3"></path>
+                      <path d="M15 19c0 0 1-1 1-3s-1-3-1-3"></path>
+                    </svg>
                     Summary
                   </button>
                   <button @click="activeTab = 'data'" 
                           :class="['tab-btn', { active: activeTab === 'data' }]">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14,2 14,8 20,8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
                     Raw Data
                   </button>
+                </div>
+                
+                <div v-if="activeTab === 'preview'" class="tab-content">
+                  <div class="file-preview-container">
+                    <div v-if="reportData.files && reportData.files.length > 0" class="file-tabs">
+                      <button 
+                        v-for="(file, index) in reportData.files" 
+                        :key="index"
+                        @click="selectedFile = file"
+                        :class="['file-tab', { active: selectedFile === file }]"
+                      >
+                        <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path v-if="file.mimeType === 'application/pdf'" d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                          <path v-else-if="file.mimeType.includes('spreadsheet')" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <path v-else d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        </svg>
+                        {{ file.filename }}
+                      </button>
+                    </div>
+                    
+                    <div v-if="selectedFile" class="file-viewer">
+                      <div v-if="selectedFile.mimeType === 'application/pdf'" class="pdf-viewer">
+                        <iframe 
+                          :src="getFileUrl(selectedFile)" 
+                          width="100%" 
+                          height="600px"
+                          frameborder="0"
+                        ></iframe>
+                      </div>
+                      <div v-else-if="selectedFile.mimeType.includes('spreadsheet')" class="excel-viewer">
+                        <div class="excel-preview">
+                          <div class="excel-header">
+                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <path d="M7 7h10v2H7zM7 11h10v2H7zM7 15h6v2H7z"></path>
+                            </svg>
+                            <h4>{{ selectedFile.filename }}</h4>
+                            <p>Excel file preview not available in browser. Click download to view.</p>
+                          </div>
+                          <button @click="downloadFile(selectedFile)" class="btn btn-primary">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7,10 12,15 17,10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download Excel File
+                          </button>
+                        </div>
+                      </div>
+                      <div v-else class="generic-viewer">
+                        <div class="file-info">
+                          <h4>{{ selectedFile.filename }}</h4>
+                          <p>File type: {{ selectedFile.mimeType }}</p>
+                          <button @click="downloadFile(selectedFile)" class="btn btn-primary">
+                            Download File
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="no-file-selected">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                      </svg>
+                      <p>Select a file to preview</p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div v-if="activeTab === 'summary'" class="tab-content">
@@ -359,6 +447,7 @@ export default {
     const historyFilter = ref('')
     const searchQuery = ref('')
     const lastUpdated = ref('')
+    const selectedFile = ref(null)
     
     const reportForm = ref({
       type: '',
@@ -413,7 +502,7 @@ export default {
     })
     
     // Simple file generation 
-    const downloadFile = (base64, filename, mimeType) => {
+    const downloadFileFromBase64 = (base64, filename, mimeType) => {
   try {
     const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
     const blob = new Blob([binary], { type: mimeType });
@@ -433,7 +522,19 @@ export default {
     // Report generation
 const generateReport = async () => {
   if (!canGenerate.value) return;
-  
+
+  // Check if export formats are selected
+  if (!reportForm.value.export_formats || reportForm.value.export_formats.length === 0) {
+    await Swal.fire({
+      title: '⚠️ Export Options Required',
+      text: 'Please select at least one export format (PDF, Excel, or Word) before generating the report.',
+      icon: 'warning',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#3b82f6'
+    });
+    return;
+  }
+
   try {
     generating.value = true;
 
@@ -484,8 +585,8 @@ const generateReport = async () => {
   }
 } else {
   const jsonContent = JSON.stringify(reportRecord.reportContent, null, 2);
-  downloadFile(
-    jsonContent,
+  downloadFileFromBase64(
+    btoa(jsonContent),
     `${reportRecord.type}_report_${reportRecord.id}.json`,
     'application/json'
   );
@@ -527,6 +628,18 @@ const generateReport = async () => {
     const previewReport = async () => {
   if (!canGenerate.value) return;
 
+  // Check if export formats are selected
+  if (!reportForm.value.export_formats || reportForm.value.export_formats.length === 0) {
+    await Swal.fire({
+      title: '⚠️ Export Options Required',
+      text: 'Please select at least one export format (PDF, Excel, or Word) before previewing the report.',
+      icon: 'warning',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#3b82f6'
+    });
+    return;
+  }
+
   try {
     generating.value = true;
 
@@ -534,26 +647,29 @@ const generateReport = async () => {
       type: reportForm.value.type,
       period: reportForm.value.period,
       start_date: reportForm.value.period === 'custom' ? reportForm.value.start_date : undefined,
-      end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined
+      end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined,
+      export_formats: reportForm.value.export_formats
     };
 
     const response = await adminAPI.generateReport(payload);
     const data = response.data?.data;
 
-console.log('API response:', data);
+    console.log('API response:', data);
     reportData.value = {
-  id: data.id || Date.now(),
-  type: payload.type,
-  period: payload.period,
-  created_at: data.created_at || new Date().toISOString(),
-  reportContent: Array.isArray(data.report) ? data.report : [], 
-  total_records: data.report?.length || 0,
-  summary: data.summary || generateSummaryFromData(data.report || [])
-};
+      id: data.id || Date.now(),
+      type: payload.type,
+      period: payload.period,
+      formats: payload.export_formats,
+      created_at: data.created_at || new Date().toISOString(),
+      reportContent: Array.isArray(data.report) ? data.report : [], 
+      total_records: data.report?.length || 0,
+      summary: data.summary || generateSummaryFromData(data.report || []),
+      files: Array.isArray(data.files) ? data.files : []
+    };
 
-
+    selectedFile.value = reportData.value.files && reportData.value.files.length > 0 ? reportData.value.files[0] : null;
     showPreviewModal.value = true;
-    activeTab.value = 'summary';
+    activeTab.value = 'preview';
 
   } catch (error) {
     console.error('Failed to preview report:', error);
@@ -565,8 +681,9 @@ console.log('API response:', data);
     
     const viewReport = (report) => {
       reportData.value = report
+      selectedFile.value = report.files && report.files.length > 0 ? report.files[0] : null
       showPreviewModal.value = true
-      activeTab.value = 'summary'
+      activeTab.value = 'preview'
     }
     
     const downloadReport = async (report) => {
@@ -613,6 +730,30 @@ console.log('API response:', data);
     const closePreview = () => {
       showPreviewModal.value = false
       reportData.value = null
+      selectedFile.value = null
+    }
+    
+    const getFileUrl = (file) => {
+      return file.url || `/api/admin/download-report/${file.filename}`
+    }
+    
+    const downloadFile = async (file) => {
+      try {
+        const response = await adminAPI.downloadReportFile(file.filename)
+        const blob = new Blob([response.data], { type: file.mimeType || 'application/octet-stream' })
+        const url = URL.createObjectURL(blob)
+        
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      } catch (error) {
+        console.error('Failed to download file:', error)
+        alert('Failed to download file. Please try again.')
+      }
     }
     
     const clearHistory = async () => {
@@ -836,6 +977,7 @@ console.log('API response:', data);
       historyFilter,
       searchQuery,
       lastUpdated,
+      selectedFile,
       reportForm,
       canGenerate,
       filteredReports,
@@ -845,6 +987,8 @@ console.log('API response:', data);
       downloadReport,
       downloadCurrentReport,
       closePreview,
+      getFileUrl,
+      downloadFile,
       clearHistory,
       refreshStats,
       getReportTitle,
@@ -1650,6 +1794,151 @@ console.log('API response:', data);
 
 .tab-content {
   min-height: 300px;
+}
+
+/* File Preview Styles */
+.file-preview-container {
+  width: 100%;
+  height: 100%;
+}
+
+.file-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.file-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.file-tab:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.file-tab.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.file-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.file-viewer {
+  width: 100%;
+  height: 600px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+.pdf-viewer iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.excel-viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #f9fafb;
+}
+
+.excel-preview {
+  text-align: center;
+  padding: 40px;
+}
+
+.excel-header {
+  margin-bottom: 24px;
+}
+
+.excel-icon {
+  width: 64px;
+  height: 64px;
+  color: #059669;
+  margin-bottom: 16px;
+}
+
+.excel-header h4 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 18px;
+}
+
+.excel-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.generic-viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #f9fafb;
+}
+
+.file-info {
+  text-align: center;
+  padding: 40px;
+}
+
+.file-info h4 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 18px;
+}
+
+.file-info p {
+  margin: 0 0 24px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.no-file-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #9ca3af;
+}
+
+.no-file-selected .icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+.no-file-selected p {
+  margin: 0;
+  font-size: 16px;
 }
 
 .summary-stats {

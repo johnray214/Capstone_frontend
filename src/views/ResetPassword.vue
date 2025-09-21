@@ -124,7 +124,11 @@ export default {
           text: 'Invalid or expired reset link. Please request a new one.',
           confirmButtonColor: '#3b82f6',
         }).then(() => {
-          router.push('/forgot-password?from=violator');
+          // Determine user type from email parameter if available
+          const userType = emailWithType.value.includes('|') ? 
+            emailWithType.value.split('|')[1] : 'violator';
+          const fromParam = userType === 'violator' ? 'violator' : 'officials';
+          router.push(`/forgot-password?from=${fromParam}`);
         });
       }
     });
@@ -211,7 +215,11 @@ export default {
             text: result.message || 'Your password has been reset successfully',
             confirmButtonColor: '#3b82f6',
           }).then(() => {
-            router.push('/login');
+            // Determine user type from email parameter to redirect to correct login page
+            const userType = emailWithType.value.includes('|') ? 
+              emailWithType.value.split('|')[1] : 'violator';
+            const loginRoute = userType === 'violator' ? '/login' : '/officials-login';
+            router.push(loginRoute);
           });
         } else {
           proxy.$swal.fire({

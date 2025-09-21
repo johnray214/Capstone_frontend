@@ -8,11 +8,11 @@
       
       <div class="forgot-password-form">
         <h2>Reset Your Password</h2>
-        <p>Enter your email address or mobile number and we'll send you a link to reset your password.</p>
+        <p>Enter your email address and we'll send you a link to reset your password.</p>
         
         <form @submit.prevent="handleSubmit" v-if="!emailSent">
           <div class="form-group">
-            <label for="identifier">Email or Mobile Number</label>
+            <label for="identifier">Email </label>
             <input
               type="text"
               id="identifier"

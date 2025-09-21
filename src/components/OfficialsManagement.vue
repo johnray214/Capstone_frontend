@@ -26,7 +26,7 @@
     <!-- User Actions -->
     <div class="content-header">
       <button @click="showCreateModal = true" class="btn btn-primary">
-        Add New User
+        Add New Enforcer/Officials
       </button>
     </div>
 
@@ -170,6 +170,54 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Pagination for Officials -->
+            <div class="pagination-container" v-if="paginationData.total > 0">
+              <div class="pagination-info">
+                Showing
+                {{ (paginationData.current_page - 1) * paginationData.per_page + 1 }}
+                to
+                {{ Math.min(paginationData.current_page * paginationData.per_page, paginationData.total) }}
+                of {{ paginationData.total }} entries
+              </div>
+
+              <div class="pagination-controls">
+                <button
+                  @click="goToPage(paginationData.current_page - 1)"
+                  :disabled="paginationData.current_page === 1"
+                  class="pagination-btn"
+                >
+                  Previous
+                </button>
+
+                <button
+                  v-for="page in visiblePages"
+                  :key="page"
+                  @click="goToPage(page)"
+                  :class="['pagination-number', { active: page === paginationData.current_page }]">
+                  {{ page }}
+                </button>
+
+                <button
+                  @click="goToPage(paginationData.current_page + 1)"
+                  :disabled="paginationData.current_page === paginationData.last_page"
+                  class="pagination-btn"
+                >
+                  Next
+                </button>
+              </div>
+
+              <div class="per-page-selector">
+                <label>Show:</label>
+                <select v-model="perPage" @change="changePerPage">
+                  <option value="15">15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <span>per page</span>
+              </div>
+            </div>
             
             <div v-if="filteredUsers.length === 0" class="no-data">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -277,7 +325,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { adminAPI } from "@/services/api"
 import Swal from "sweetalert2"
 
@@ -290,10 +338,21 @@ export default {
     const loading = ref(true)
     const saving = ref(false)
     const users = ref([])
+    const perPage = ref(15)
     const showCreateModal = ref(false)
     const showEditModal = ref(false)
     const editingUser = ref(null)
     const showPassword = ref(false)
+    
+    // Pagination data
+    const paginationData = ref({
+      current_page: 1,
+      last_page: 1,
+      per_page: 15,
+      total: 0,
+      from: 0,
+      to: 0
+    })
 
     const userForm = ref({
       first_name: "",
@@ -318,32 +377,34 @@ export default {
       return []
     })
 
-    const loadUsers = async () => {
+    const loadUsers = async (page = 1) => {
       loading.value = true
       try {
-        const res = await adminAPI.getUsers()
-        users.value = res.data.data.data
+        const params = {
+          page: page,
+          per_page: perPage.value,
+          ...userFilters.value
+        }
+        const res = await adminAPI.getUsers(params)
+        
+        if (res.data.status === 'success') {
+          users.value = res.data.data.data
+          paginationData.value = {
+            current_page: res.data.data.current_page,
+            last_page: res.data.data.last_page,
+            per_page: res.data.data.per_page,
+            total: res.data.data.total,
+            from: res.data.data.from,
+            to: res.data.data.to
+          }
+        }
       } finally {
         loading.value = false
       }
     }
 
-    const filteredUsers = computed(() => {
-      let filtered = [...users.value]
-      if (userFilters.value.role)
-        filtered = filtered.filter(u => u.user_type === userFilters.value.role)
-      if (userFilters.value.status)
-        filtered = filtered.filter(u => u.status === userFilters.value.status)
-      if (userFilters.value.search) {
-        const s = userFilters.value.search.toLowerCase()
-        filtered = filtered.filter(u => 
-          u.first_name.toLowerCase().includes(s) || 
-          u.last_name.toLowerCase().includes(s) || 
-          u.email.toLowerCase().includes(s)
-        )
-      }
-      return filtered
-    })
+    // Remove client-side filtering since we're using server-side pagination
+    const filteredUsers = computed(() => users.value)
 
     const saveUser = async () => {
     saving.value = true
@@ -473,6 +534,34 @@ export default {
         user_type: "",
       }
     }
+    
+    // Pagination functions
+    const goToPage = async (page) => {
+      if (page < 1 || page > paginationData.value.last_page) return
+      await loadUsers(page)
+    }
+    
+    const changePerPage = async () => {
+      paginationData.value.current_page = 1
+      await loadUsers(1)
+    }
+    
+    // Computed property for visible pages
+    const visiblePages = computed(() => {
+      const current = paginationData.value.current_page
+      const last = paginationData.value.last_page
+      const pages = []
+      
+      // Show pages around current page
+      const start = Math.max(1, current - 2)
+      const end = Math.min(last, current + 2)
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      return pages
+    })
 
     const getInitials = (firstName, lastName) => {
       return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
@@ -489,12 +578,20 @@ export default {
       })
     }
 
+    // Watch for filter changes and reload data
+    watch(userFilters, () => {
+      loadUsers(1) // Reset to first page when filters change
+    }, { deep: true })
+    
     onMounted(loadUsers)
 
     return {
       loading,
       saving,
       users,
+      perPage,
+      paginationData,
+      visiblePages,
       userForm,
       showPassword,
       userFilters,
@@ -507,6 +604,8 @@ export default {
       toggleUserStatus,
       deleteUser,
       closeModals,
+      goToPage,
+      changePerPage,
       getInitials,
       formatDateTime,
       normalizedRole

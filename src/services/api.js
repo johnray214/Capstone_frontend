@@ -124,6 +124,7 @@ export const adminAPI = {
     generateReport: (params = {}) =>
         api.post(`/admin/generate-report/`, params),
     getReportHistory: () => api.get("/admin/history"),
+    clearReportHistory: () => api.delete("/admin/history/clear"),
     downloadReportFile: (filename) =>
         api.get(`/admin/download-report/${filename}`, {
             responseType: "blob",
