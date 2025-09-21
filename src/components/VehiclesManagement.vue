@@ -676,22 +676,6 @@ export default {
       await goToVehiclePage(1)
     }
     
-    // Computed property for visible pages
-    const visibleVehiclePages = computed(() => {
-      const current = vehiclePaginationData.value.current_page
-      const last = vehiclePaginationData.value.last_page
-      const pages = []
-      
-      // Show pages around current page
-      const start = Math.max(1, current - 2)
-      const end = Math.min(last, current + 2)
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i)
-      }
-      
-      return pages
-    })
 
     const formatDateTime = (dateString) => {
       if (!dateString) return null
