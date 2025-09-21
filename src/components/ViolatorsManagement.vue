@@ -369,7 +369,7 @@
             v-model="violatorForm.password" 
             :type="showViolatorPassword ? 'text' : 'password'" 
             class="form-input" 
-            placeholder="Leave blank to keep current password"
+            placeholder="8+ chars, 1 uppercase, 1 number"
           />
           <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
             <span v-if="showViolatorPassword">🙈</span>
@@ -395,6 +395,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { adminAPI } from '@/services/api'
 import Swal from 'sweetalert2'
+import { validatePassword } from '@/utils/passwordValidation'
 
 export default {
   name: 'ViolatorsManagement',
@@ -513,6 +514,21 @@ const closeEditViolatorModal = () => {
 const saveViolator = async () => {
   savingViolator.value = true;
   try {
+    // Validate password if provided
+    if (violatorForm.value.password && violatorForm.value.password.trim() !== '') {
+      const passwordValidation = validatePassword(violatorForm.value.password.trim())
+      if (!passwordValidation.isValid) {
+        Swal.fire("Error", passwordValidation.errors.join(', '), "error")
+        savingViolator.value = false
+        return
+      }
+      // Only include password in payload if it's provided and valid
+      violatorForm.value.password = violatorForm.value.password.trim()
+    } else {
+      // Remove password from payload if it's empty (keep current password)
+      delete violatorForm.value.password
+    }
+
     const payload = { ...violatorForm.value };
     const response = await adminAPI.updateViolator(payload);
 

@@ -82,7 +82,7 @@
                 v-model="passwordData.new_password"
                 class="form-input"
                 :class="{ error: passwordErrors.new_password }"
-                placeholder="Minimum 6 characters"
+                placeholder="8+ chars, 1 uppercase, 1 number"
               >
               <span v-if="passwordErrors.new_password" class="error-message">{{ passwordErrors.new_password[0] }}</span>
             </div>
@@ -186,7 +186,8 @@ import { ref, computed, onMounted } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { violatorAPI } from '@/services/api/'
-import Swal from 'sweetalert2' 
+import Swal from 'sweetalert2'
+import { validatePassword } from '@/utils/passwordValidation' 
 
 const { state } = useAuthStore()
 const user = computed(() => state.user)
@@ -283,6 +284,19 @@ const changePassword = async () => {
     changingPassword.value = true
     passwordErrors.value = {}
     message.value = ''
+
+    // Validate password requirements
+    const passwordValidation = validatePassword(passwordData.value.new_password)
+    if (!passwordValidation.isValid) {
+      passwordErrors.value.new_password = passwordValidation.errors
+      return
+    }
+
+    // Validate password confirmation
+    if (passwordData.value.new_password !== passwordData.value.new_password_confirmation) {
+      passwordErrors.value.new_password_confirmation = ['Passwords do not match']
+      return
+    }
 
     await violatorAPI.changePassword(passwordData.value)
 

@@ -234,7 +234,7 @@
       <div v-if="showCreateModal || showEditModal" class="modal-overlay" @click="closeModals">
         <div class="modal" @click.stop>
           <div class="modal-header">
-            <h3>{{ showEditModal ? 'Edit User' : 'Create New User' }}</h3>
+            <h3>{{ showEditModal ? 'Edit Enforcer/Officials' : 'Create New Enforcer/Officials' }}</h3>
             <button @click="closeModals" class="modal-close">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -302,7 +302,7 @@
                   v-model="userForm.password" 
                   :type="showPassword ? 'text' : 'password'"
                   class="form-input" 
-                  :placeholder="showEditModal ? 'Leave blank to keep current password' : 'Enter a temporary password'"
+                  :placeholder="showEditModal ? 'Leave blank to keep current password' : '8+ chars, 1 uppercase, 1 number'"
                 />
                 <button type="button" class="toggle-password" @click="showPassword = !showPassword">
                   <span v-if="showPassword">🙈</span>
@@ -328,6 +328,7 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { adminAPI } from "@/services/api"
 import Swal from "sweetalert2"
+import { validatePassword } from "@/utils/passwordValidation"
 
 export default {
   name: "OfficialsManagement",
@@ -410,6 +411,21 @@ export default {
     saving.value = true
     try {
       let payload = { ...userForm.value }
+
+      // Validate password if provided (for new users or when updating password)
+      if (userForm.value.password && userForm.value.password.trim() !== '') {
+        const passwordValidation = validatePassword(userForm.value.password.trim())
+        if (!passwordValidation.isValid) {
+          Swal.fire("Error", passwordValidation.errors.join(', '), "error")
+          saving.value = false
+          return
+        }
+        // Only include password in payload if it's provided and valid
+        payload.password = userForm.value.password.trim()
+      } else if (showEditModal.value) {
+        // When editing, remove password from payload if it's empty (keep current password)
+        delete payload.password
+      }
 
       if (normalizedRole.value === "admin") {
         payload.user_type = "enforcer"

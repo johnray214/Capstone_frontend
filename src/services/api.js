@@ -78,6 +78,7 @@ export const adminAPI = {
     
     //profile
     profile: () => api.get("/admin/profile"),
+    changePassword: (data) => api.post("/admin/change-password", data),
 
     // Officials Management
     getUsers: (role = "") =>

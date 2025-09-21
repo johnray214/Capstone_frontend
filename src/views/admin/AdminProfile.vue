@@ -155,7 +155,7 @@
                   v-model="passwordData.new_password"
                   class="form-input"
                   :class="{ error: passwordErrors.new_password }"
-                  placeholder="Minimum 6 characters"
+                  placeholder="8+ chars, 1 uppercase, 1 number"
                 >
                 <span v-if="passwordErrors.new_password" class="error-message">{{ passwordErrors.new_password[0] }}</span>
               </div>
@@ -168,7 +168,7 @@
                   v-model="passwordData.new_password_confirmation"
                   class="form-input"
                   :class="{ error: passwordErrors.new_password_confirmation }"
-                  placeholder="Minimum 6 characters"
+                  placeholder="Confirm new password"
                 >
                 <span v-if="passwordErrors.new_password_confirmation" class="error-message">{{ passwordErrors.new_password_confirmation[0] }}</span>
               </div>
@@ -188,11 +188,12 @@
   </template>
   
   <script>
-  import { ref, computed, onMounted } from 'vue'
-  import SidebarLayout from '@/components/SidebarLayout.vue'
-  import { adminAPI } from '@/services/api'
-  import { useAuthStore } from '@/stores/auth'
-  import Swal from 'sweetalert2'
+import { ref, computed, onMounted } from 'vue'
+import SidebarLayout from '@/components/SidebarLayout.vue'
+import { adminAPI } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
+import Swal from 'sweetalert2'
+import { validatePassword, getPasswordRequirements } from '@/utils/passwordValidation'
   
   export default {
     name: 'AdminProfile',
@@ -415,12 +416,59 @@
       }
   
       const changePassword = async () => {
+        try {
+          changingPassword.value = true
+          passwordErrors.value = {}
+
+          // Validate password requirements
+          const passwordValidation = validatePassword(passwordData.value.new_password)
+          if (!passwordValidation.isValid) {
+            passwordErrors.value.new_password = passwordValidation.errors
+            return
+          }
+
+          // Validate password confirmation
+          if (passwordData.value.new_password !== passwordData.value.new_password_confirmation) {
+            passwordErrors.value.new_password_confirmation = ['Passwords do not match']
+            return
+          }
+
+          await adminAPI.changePassword(passwordData.value)
+
+          // Show success message with SweetAlert
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Password changed successfully',
+            confirmButtonText: 'OK'
+          })
+
+          passwordData.value = {
+            current_password: '',
+            new_password: '',
+            new_password_confirmation: ''
+          }
+        } catch (err) {
+          if (err.response?.status === 422) {
+            passwordErrors.value = err.response.data.errors
+          } else if (err.response?.data?.message) {
             await Swal.fire({
-          icon: 'info',
-          title: 'Not Available',
-          text: 'Password change for management users is not available here.',
-          confirmButtonColor: '#3b82f6'
-        })
+              icon: 'error',
+              title: 'Error',
+              text: err.response.data.message,
+              confirmButtonText: 'OK'
+            })
+          } else {
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to change password',
+              confirmButtonText: 'OK'
+            })
+          }
+        } finally {
+          changingPassword.value = false
+        }
       }
       
       const cancelEdit = () => {
