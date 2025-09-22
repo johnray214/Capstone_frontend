@@ -81,8 +81,7 @@ export const adminAPI = {
     changePassword: (data) => api.post("/admin/change-password", data),
 
     // Officials Management
-    getUsers: (role = "") =>
-        api.get(`/admin/users${role ? `?role=${role}` : ""}`),
+    getUsers: (params = {}) => api.get("/admin/users", { params }),
     createUser: (data) => api.post("/admin/users", data),
     updateUser: (userType, id, data) =>
         api.post(`/admin/users/${userType}/${id}?_method=PUT`, data),
@@ -122,9 +121,8 @@ export const adminAPI = {
         api.delete(`/admin/violators/${id}/force-delete`),
 
     // Reports & Analytics
-    generateReport: (params = {}) =>
-        api.post(`/admin/generate-report/`, params),
-    getReportHistory: () => api.get("/admin/history"),
+    generateReport: (payload) => api.post("/admin/generate-report", payload),
+    getReportHistory: (params) => api.get("/admin/history", { params }),
     clearReportHistory: () => api.delete("/admin/history/clear"),
     downloadReportFile: (filename) =>
         api.get(`/admin/download-report/${filename}`, {
