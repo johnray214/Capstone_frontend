@@ -23,7 +23,7 @@
       </header>
 	<div class="admin-users">
 	<br><br>
- <div class="filters-card">
+ <form class="filters-card" @submit.prevent="onSearchClick">
   <div class="filters-row">
     <div class="filter-group">
       <label class="form-label">Search Name</label>
@@ -77,8 +77,12 @@
         placeholder="Search by License Number"
       />
     </div>
+    <div class="filter-group" style="align-self:end">
+      <label class="form-label" style="visibility:hidden">Search</label>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </div>
   </div>
-</div>
+</form>
 
 
           <!-- Violators Table -->
@@ -196,7 +200,7 @@
               </button>
 
               <button
-                v-for="page in visiblePages"
+                v-for="page in visibleViolatorPages"
                 :key="page"
                 @click="goToViolatorPage(page)"
                 :class="['pagination-number', { active: page === violatorPaginationData.current_page }]">
@@ -370,11 +374,11 @@
           <small class="text-muted">(Leave empty to keep current password)</small>
         </label>
         <div class="password-input-container">
-          <div class="password-input">
-            <input 
-              v-model="violatorForm.password" 
-              :type="showViolatorPassword ? 'text' : 'password'" 
-              class="form-input"
+        <div class="password-input">
+          <input 
+            v-model="violatorForm.password" 
+            :type="showViolatorPassword ? 'text' : 'password'" 
+            class="form-input" 
               :class="{
                 'password-weak': passwordStrength === 'weak',
                 'password-medium': passwordStrength === 'medium', 
@@ -383,11 +387,11 @@
               }"
               placeholder="Enter new password (optional)"
               autocomplete="new-password"
-            />
-            <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
-              <span v-if="showViolatorPassword">🙈</span>
-              <span v-else>👁️</span>
-            </button>
+          />
+          <button type="button" class="toggle-password" @click="showViolatorPassword = !showViolatorPassword">
+            <span v-if="showViolatorPassword">🙈</span>
+            <span v-else>👁️</span>
+          </button>
           </div>
           
           <!-- Password Strength Indicator -->
@@ -503,13 +507,13 @@ export default {
     const error = ref('')
     
     const violatorFilters = ref({
-      name: '',
-      address: '',
-      mobile_number: '',
-      gender: '',
-      professional: '',
-      license_number: ''
-    })
+    name: '',
+    address: '',
+    mobile_number: '',
+    gender: '',
+    professional: '',
+    license_number: ''
+  })
     
     const violatorPaginationData = ref({
       current_page: 1,
@@ -576,56 +580,56 @@ export default {
     
 
     const editViolator = (violator) => {
-      editingViolator.value = violator;
+  editingViolator.value = violator;
 
-      violatorForm.value = {
-        id: violator.id,
-        first_name: violator.first_name,
-        middle_name: violator.middle_name,
-        last_name: violator.last_name,
-        email: violator.email,
-        mobile_number: violator.mobile_number,
-        gender: violator.gender ? 1 : 0,
-        license_number: violator.license_number,
-        professional: violator.professional ? 1 : 0,
-        barangay: violator.barangay,
-        city: violator.city,
-        province: violator.province,
+  violatorForm.value = {
+    id: violator.id,
+    first_name: violator.first_name,
+    middle_name: violator.middle_name,
+    last_name: violator.last_name,
+    email: violator.email,
+    mobile_number: violator.mobile_number,
+    gender: violator.gender ? 1 : 0,
+    license_number: violator.license_number,
+    professional: violator.professional ? 1 : 0,
+    barangay: violator.barangay,
+    city: violator.city,
+    province: violator.province,
         password: '' // Always start with empty password in edit mode
-      };
+  };
 
-      showEditViolatorModal.value = true;
+  showEditViolatorModal.value = true;
       // Reset password validation state
       passwordStrength.value = '';
       passwordErrors.value = [];
-    };
+};
 
-    const closeEditViolatorModal = () => {
-      showEditViolatorModal.value = false;
-      editingViolator.value = null;
-      violatorForm.value = {
-        id:'',
-        first_name: '',
-        middle_name: '',
-        last_name: '',
-        license_number: '',
-        mobile_number: '',
-        barangay: '',
-        city: '',
+const closeEditViolatorModal = () => {
+  showEditViolatorModal.value = false;
+  editingViolator.value = null;
+  violatorForm.value = {
+    id:'',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    license_number: '',
+    mobile_number: '',
+    barangay: '',
+    city: '',
         province: '',
         password: '',
         gender: '',
         professional: ''
-      };
+  };
       // Reset password validation state
       passwordStrength.value = '';
       passwordErrors.value = [];
       showViolatorPassword.value = false;
-    };
+};
 
-    const saveViolator = async () => {
-      savingViolator.value = true;
-      try {
+const saveViolator = async () => {
+  savingViolator.value = true;
+  try {
         // Validate password if provided
         const passwordValidation = validateOptionalPassword(violatorForm.value.password);
         
@@ -640,7 +644,7 @@ export default {
           return;
         }
 
-        const payload = { ...violatorForm.value };
+    const payload = { ...violatorForm.value };
         
         // Only include password in payload if it's provided and valid
         if (violatorForm.value.password && violatorForm.value.password.trim() !== '') {
@@ -650,106 +654,62 @@ export default {
           delete payload.password;
         }
 
-        const response = await adminAPI.updateViolator(payload);
+    const response = await adminAPI.updateViolator(payload);
 
-        if (response.data.status === 'success') {
-          await loadViolators(violatorPaginationData.value.current_page);
-          closeEditViolatorModal();
-          Swal.fire({
-            icon: 'success',
-            title: 'Updated',
-            text: 'Violator updated successfully',
-            timer: 1500,
-            showConfirmButton: true
-          });
-        }
-      } catch (err) {
-        console.error(err);
+    if (response.data.status === 'success') {
+      await loadViolators(violatorPaginationData.value.current_page);
+      closeEditViolatorModal();
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated',
+        text: 'Violator updated successfully',
+        timer: 1500,
+        showConfirmButton: true
+      });
+    }
+  } catch (err) {
+    console.error(err);
         Swal.fire({ 
           icon: 'error', 
           title: 'Error', 
           text: err.response?.data?.message || 'Failed to update violator' 
         });
-      } finally {
-        savingViolator.value = false;
-      }
-    };
+  } finally {
+    savingViolator.value = false;
+  }
+};
     
     const loadViolators = async (page = 1) => {
-      loadingViolators.value = true;
-      try {
-        const params = {
-          page,
-          per_page: violatorPerPage.value,
-          ...violatorFilters.value
-        };
-        const response = await adminAPI.getViolators(params);
-        
-        if (response.data.status === "success") {
-          violators.value = response.data.data.data;
-          violatorPaginationData.value = {
-            current_page: response.data.data.current_page,
-            last_page: response.data.data.last_page,
-            per_page: response.data.data.per_page,
-            total: response.data.data.total,
-            from: response.data.data.from,
-            to: response.data.data.to
-          };
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        loadingViolators.value = false;
-      }
+  loadingViolators.value = true;
+  try {
+    const params = {
+      page,
+      per_page: violatorPerPage.value,
+      ...violatorFilters.value
     };
+    const response = await adminAPI.getViolators(params);
+    
+    if (response.data.status === "success") {
+      violators.value = response.data.data.data;
+      violatorPaginationData.value = {
+        current_page: response.data.data.current_page,
+        last_page: response.data.data.last_page,
+        per_page: response.data.data.per_page,
+        total: response.data.data.total,
+        from: response.data.data.from,
+        to: response.data.data.to
+      };
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loadingViolators.value = false;
+  }
+};
 
-    const filteredViolators = computed(() => {
-      let base = Array.isArray(violators.value) ? violators.value : []
-      let filtered = base.filter(v => !!v)
-
-      if (violatorFilters.value.name) {
-        const search = violatorFilters.value.name.toLowerCase()
-        filtered = filtered.filter(v => {
-          const fn = v.first_name?.toLowerCase() || ''
-          const ln = v.last_name?.toLowerCase() || ''
-          return fn.includes(search) || ln.includes(search)
-        })
-      }
-
-      if (violatorFilters.value.address) {
-        const addr = violatorFilters.value.address.toLowerCase()
-        filtered = filtered.filter(v => {
-          const fullAddr = `${v.barangay || ''} ${v.city || ''} ${v.province || ''}`.toLowerCase()
-          return fullAddr.includes(addr)
-        })
-      }
-
-      if (violatorFilters.value.mobile_number) {
-        const mobile = violatorFilters.value.mobile_number.toLowerCase()
-        filtered = filtered.filter(v => 
-          v.mobile_number?.toLowerCase().includes(mobile)
-        )
-      }
-
-      if (violatorFilters.value.gender !== '') {
-        filtered = filtered.filter(v => String(v.gender) === String(violatorFilters.value.gender))
-      }
-
-      if (violatorFilters.value.professional !== '') {
-        filtered = filtered.filter(v => String(v.professional) === String(violatorFilters.value.professional))
-      }
-
-      if (violatorFilters.value.license_number) {
-        const lic = violatorFilters.value.license_number.toLowerCase()
-        filtered = filtered.filter(v => v.license_number?.toLowerCase().includes(lic))
-      }
-
-      return filtered
-    })
-
-    const paginatedViolators = computed(() => {
-      return filteredViolators.value; 
-    });
+const paginatedViolators = computed(() => {
+  return Array.isArray(violators.value) ? violators.value : []
+});
     
 
     const viewViolatorDetails = (violator) => {
@@ -764,88 +724,93 @@ export default {
 
 
     const archiveViolator = async (violator) => {
-      const result = await Swal.fire({
-        title: 'Archive Violator?',
-        html: `Are you sure you want to archive <strong>${violator.first_name} ${violator.last_name}</strong>?<br><br>
-               Archived violators can be restored later from the Archives page.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, archive',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#dc2626',
-        iconColor:'#dc2626'
+  const result = await Swal.fire({
+    title: 'Archive Violator?',
+    html: `Are you sure you want to archive <strong>${violator.first_name} ${violator.last_name}</strong>?<br><br>
+           Archived violators can be restored later from the Archives page.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, archive',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#dc2626',
+    iconColor:'#dc2626'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await adminAPI.archiveViolator(violator.id);
+      await loadViolators(violatorPaginationData.value.current_page);
+
+      Swal.fire({
+        title: 'Archived',
+        text: 'Violator has been archived successfully.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: true
       });
-
-      if (result.isConfirmed) {
-        try {
-          await adminAPI.archiveViolator(violator.id);
-          await loadViolators(violatorPaginationData.value.current_page);
-
-          Swal.fire({
-            title: 'Archived',
-            text: 'Violator has been archived successfully.',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: true
-          });
-        } catch (error) {
-          console.error('Failed to archive violator:', error);
-          Swal.fire({
-            title: 'Archive failed',
-            text: 'Could not archive violator. Please try again.',
-            icon: 'error'
-          });
-        }
-      }
-    };
+    } catch (error) {
+      console.error('Failed to archive violator:', error);
+      Swal.fire({
+        title: 'Archive failed',
+        text: 'Could not archive violator. Please try again.',
+        icon: 'error'
+      });
+    }
+  }
+};
 
 
-    const goToViolatorPage = async (page) => {
-      if (page < 1 || page > violatorPaginationData.value.last_page) return
-      
-      try {
-        loadingViolators.value = true
-        const params = {
-          page: page,
-          per_page: violatorPerPage.value,
-          ...violatorFilters.value
-        }
-        
-        const response = await adminAPI.getViolators(params)
-        
-        if (response.data.status === 'success') {
-          violators.value = response.data.data.data
-          violatorPaginationData.value = {
-            current_page: response.data.data.current_page,
-            last_page: response.data.data.last_page,
-            per_page: response.data.data.per_page,
-            total: response.data.data.total,
-            from: response.data.data.from,
-            to: response.data.data.to
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load violators page:', error)
-      } finally {
-        loadingViolators.value = false
+const goToViolatorPage = async (page) => {
+  if (page < 1 || page > violatorPaginationData.value.last_page) return
+  
+  try {
+    loadingViolators.value = true
+    const params = {
+      page: page,
+      per_page: violatorPerPage.value,
+      ...violatorFilters.value
+    }
+    
+    const response = await adminAPI.getViolators(params)
+    
+    if (response.data.status === 'success') {
+      violators.value = response.data.data.data
+      violatorPaginationData.value = {
+        current_page: response.data.data.current_page,
+        last_page: response.data.data.last_page,
+        per_page: response.data.data.per_page,
+        total: response.data.data.total,
+        from: response.data.data.from,
+        to: response.data.data.to
       }
     }
+  } catch (error) {
+    console.error('Failed to load violators page:', error)
+  } finally {
+    loadingViolators.value = false
+  }
+}
 
-    const changeViolatorPerPage = async () => {
-      violatorPaginationData.value.current_page = 1
-      await goToViolatorPage(1)
-    }
+const changeViolatorPerPage = async () => {
+  violatorPaginationData.value.current_page = 1
+  await goToViolatorPage(1)
+}
 
-    const formatDateTime = (dateString) => {
-      if (!dateString) return null
-      return new Date(dateString).toLocaleString('en-PH', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    }
+const onSearchClick = async () => {
+  violatorPaginationData.value.current_page = 1
+  await loadViolators(1)
+}
+
+const formatDateTime = (dateString) => {
+  if (!dateString) return null
+  return new Date(dateString).toLocaleString('en-PH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
     
     const getAttemptClass = (count) => {
       if (!count || count <= 1) return 'attempt-first'
@@ -872,13 +837,13 @@ export default {
     }
     
     const formatCurrency = (amount) => {
-      if (amount == null || isNaN(amount)) return "0.00";
-      return new Intl.NumberFormat("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(parseFloat(amount));
-    };
-
+  if (amount == null || isNaN(amount)) return "0.00";
+  return new Intl.NumberFormat("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(parseFloat(amount));
+};
+    
     const getInitials = (firstName, lastName) => {
       return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
     }
@@ -924,7 +889,8 @@ export default {
       getPasswordStrengthClass,
       getPasswordStrengthText,
       getPasswordRequirements,
-      loadViolators: () => loadViolators()
+      loadViolators: () => loadViolators(),
+      onSearchClick
     }
   }
 }

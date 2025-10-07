@@ -23,7 +23,7 @@
       </header>
 	<div class="admin-vehicles">
 	<br><br>
- <div class="filters-card">
+<form class="filters-card" @submit.prevent="onSearchClick">
   <div class="filters-row">
     <div class="filter-group">
       <label class="form-label">Search Owner Name</label>
@@ -81,8 +81,12 @@
         placeholder="Search by Color"
       />
     </div>
+    <div class="filter-group" style="align-self:end">
+      <label class="form-label" style="visibility:hidden">Search</label>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </div>
   </div>
-</div>
+</form>
 </div>
           <!-- Vehicles Table -->
           <div class="table-card">
@@ -577,57 +581,8 @@ export default {
       }
     }
 
-    const filteredVehicles = computed(() => {
-      let base = Array.isArray(vehicles.value) ? vehicles.value : []
-      let filtered = base.filter(v => !!v)
-
-      if (vehicleFilters.value.owner_name) {
-        const search = vehicleFilters.value.owner_name.toLowerCase()
-        filtered = filtered.filter(v => {
-          const fn = v.owner_first_name?.toLowerCase() || ''
-          const ln = v.owner_last_name?.toLowerCase() || ''
-          const mn = v.owner_middle_name?.toLowerCase() || ''
-          return fn.includes(search) || ln.includes(search) || mn.includes(search)
-        })
-      }
-
-      if (vehicleFilters.value.plate_number) {
-        const plate = vehicleFilters.value.plate_number.toLowerCase()
-        filtered = filtered.filter(v => 
-          v.plate_number?.toLowerCase().includes(plate)
-        )
-      }
-
-      if (vehicleFilters.value.make) {
-        const make = vehicleFilters.value.make.toLowerCase()
-        filtered = filtered.filter(v => 
-          v.make?.toLowerCase().includes(make)
-        )
-      }
-
-      if (vehicleFilters.value.vehicle_type) {
-        filtered = filtered.filter(v => v.vehicle_type === vehicleFilters.value.vehicle_type)
-      }
-
-      if (vehicleFilters.value.model) {
-        const model = vehicleFilters.value.model.toLowerCase()
-        filtered = filtered.filter(v => 
-          v.model?.toLowerCase().includes(model)
-        )
-      }
-
-      if (vehicleFilters.value.color) {
-        const color = vehicleFilters.value.color.toLowerCase()
-        filtered = filtered.filter(v => 
-          v.color?.toLowerCase().includes(color)
-        )
-      }
-
-      return filtered
-    })
-
     const paginatedVehicles = computed(() => {
-      return filteredVehicles.value
+      return Array.isArray(vehicles.value) ? vehicles.value : []
     })
 
     const viewVehicleDetails = (vehicle) => {
@@ -675,7 +630,12 @@ export default {
       vehiclePaginationData.value.current_page = 1
       await goToVehiclePage(1)
     }
-    
+
+    const onSearchClick = async () => {
+      vehiclePaginationData.value.current_page = 1
+      await loadVehicles(1)
+    }
+
 
     const formatDateTime = (dateString) => {
       if (!dateString) return null
@@ -731,7 +691,8 @@ export default {
       vehicleForm,
       closeEditVehicleModal,
       savingVehicle,
-      loadVehicles
+      loadVehicles,
+      onSearchClick
     }
   }
 }

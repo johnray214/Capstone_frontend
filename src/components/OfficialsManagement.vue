@@ -301,11 +301,11 @@
                 <small v-if="showEditModal" class="text-muted">(Leave empty to keep current password)</small>
               </label>
               <div class="password-input-container">
-                <div class="password-input">
-                  <input 
-                    v-model="userForm.password" 
-                    :type="showPassword ? 'text' : 'password'"
-                    class="form-input"
+              <div class="password-input">
+                <input 
+                  v-model="userForm.password" 
+                  :type="showPassword ? 'text' : 'password'"
+                  class="form-input" 
                     :class="{
                       'password-weak': passwordStrength === 'weak',
                       'password-medium': passwordStrength === 'medium',
@@ -315,11 +315,11 @@
                     :placeholder="showEditModal ? 'Leave blank to keep current password' : 'Enter a secure password'"
                     :required="!showEditModal"
                     autocomplete="new-password"
-                  />
-                  <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-                    <span v-if="showPassword">🙈</span>
-                    <span v-else>👁️</span>
-                  </button>
+                />
+                <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                  <span v-if="showPassword">🙈</span>
+                  <span v-else>👁️</span>
+                </button>
                 </div>
                 
                 <!-- Password Strength Indicator -->
@@ -495,7 +495,7 @@ export default {
         const res = await adminAPI.getUsers(params)
 
         if (res.data.status === "success") {
-          users.value = res.data.data.data
+        users.value = res.data.data.data
           paginationData.value = {
             current_page: res.data.data.current_page,
             last_page: res.data.data.last_page,
@@ -514,9 +514,9 @@ export default {
     const filteredUsers = computed(() => users.value)
 
     const saveUser = async () => {
-      saving.value = true
-      try {
-        let payload = { ...userForm.value }
+    saving.value = true
+    try {
+      let payload = { ...userForm.value }
 
         // Enhanced password validation
         if (userForm.value.password && userForm.value.password.trim() !== "") {
@@ -532,9 +532,9 @@ export default {
               html: passwordValidation.errors.join('<br>'),
               showConfirmButton: true
             })
-            saving.value = false
-            return
-          }
+          saving.value = false
+          return
+        }
           payload.password = userForm.value.password.trim()
         } else if (showEditModal.value) {
           // Keep old password when editing
@@ -554,28 +554,28 @@ export default {
         if (normalizedRole.value === "admin") {
           payload.user_type = "enforcer"
         } else if (normalizedRole.value === "deputy" || normalizedRole.value === "head") {
-          if (!userForm.value.user_type) {
-            Swal.fire("Error", "Please select a role", "error")
-            saving.value = false
-            return
-          }
-          payload.user_type = userForm.value.user_type.toLowerCase()
+        if (!userForm.value.user_type) {
+          Swal.fire("Error", "Please select a role", "error")
+          saving.value = false
+          return
         }
+        payload.user_type = userForm.value.user_type.toLowerCase()
+      }
 
-        let res
-        if (showEditModal.value) {
-          res = await adminAPI.updateUser(editingUser.value.user_type, editingUser.value.id, payload)
-        } else {
-          res = await adminAPI.createUser(payload)
-        }
+      let res
+      if (showEditModal.value) {
+        res = await adminAPI.updateUser(editingUser.value.user_type, editingUser.value.id, payload)
+      } else {
+        res = await adminAPI.createUser(payload)
+      }
 
-        if (res.data.status === "success") {
-          await loadUsers()
-          closeModals()
+      if (res.data.status === "success") {
+        await loadUsers()
+        closeModals()
           Swal.fire("Success", `User ${showEditModal.value ? "updated" : "created"} successfully!`, "success")
-        }
-      } catch (e) {
-        console.error("Error saving user:", e)
+      }
+    } catch (e) {
+      console.error("Error saving user:", e)
         const errors = e.response?.data?.errors
         if (errors) {
           const errorMessages = Object.values(errors).flat().join('<br>')
@@ -588,10 +588,10 @@ export default {
         } else {
           Swal.fire("Error", e.response?.data?.message || "Failed to save user", "error")
         }
-      } finally {
-        saving.value = false
-      }
+    } finally {
+      saving.value = false
     }
+      }
 
     const editUser = (user) => {
       editingUser.value = user
@@ -637,11 +637,11 @@ export default {
     }
 
     const deleteUser = async (user) => {
-      const result = await Swal.fire({
+    const result = await Swal.fire({
         title: "Are you sure?",
-        text: `Do you really want to delete ${user.first_name} ${user.last_name}?`,
+      text: `Do you really want to delete ${user.first_name} ${user.last_name}?`,
         icon: "warning",
-        showCancelButton: true,
+      showCancelButton: true,
         iconColor: "#d33",
         confirmButtonColor: "#d33",
         confirmButtonText: "Yes, archive!",
@@ -665,7 +665,7 @@ export default {
       showEditModal.value = false
       editingUser.value = null
       saving.value = false
-
+      
       userForm.value = {
         first_name: "",
         last_name: "",

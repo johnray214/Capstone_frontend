@@ -26,7 +26,7 @@
       </header>
 
             <!-- Filters -->
-            <div class="filters-card">
+            <form class="filters-card" @submit.prevent="onSearchClick">
                 <div class="filters-row">
                     <!-- Violation Type -->
                     <div class="filter-group">
@@ -109,9 +109,14 @@
   <label class="form-label">Date To</label>
   <input type="date" v-model="filters.dateTo" class="form-input" />
 </div>
+
+                    <div class="filter-group" style="align-self:end">
+                        <label class="form-label" style="visibility:hidden">Search</label>
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </div>
                     
                 </div>
-            </div>
+            </form>
             
 
             <!-- Transactions Table -->
@@ -664,91 +669,21 @@ export default {
             address: ""
         });
 
-        // FRONTEND filtering - applied to current page data only
+        // Hybrid filtering: backend for text/date; frontend for selects (current page only)
         const displayedTransactions = computed(() => {
-            let filtered = Array.isArray(allTransactions.value) 
-                ? [...allTransactions.value] 
-                : [];
-
-            // Search filter
-            if (filters.value.search) {
-                const search = filters.value.search.toLowerCase();
-                filtered = filtered.filter(
-                    (t) =>
-                        t.violator?.first_name?.toLowerCase().includes(search) ||
-                        t.violator?.last_name?.toLowerCase().includes(search) ||
-                        t.violator?.license_number?.toLowerCase().includes(search) ||
-                        t.violation?.name?.toLowerCase().includes(search)
-                );
-            }
-
-            // Violation Type filter
+            let items = Array.isArray(allTransactions.value) ? [...allTransactions.value] : [];
             if (filters.value.violation_id) {
-                filtered = filtered.filter(
-                    (t) => t.violation?.id === parseInt(filters.value.violation_id)
-                );
+                items = items.filter(t => t.violation?.id === parseInt(filters.value.violation_id));
             }
-
-            // Vehicle Type filter
             if (filters.value.vehicle_type) {
-                filtered = filtered.filter(
-                    (t) => t.vehicle?.vehicle_type === filters.value.vehicle_type
-                );
+                items = items.filter(t => t.vehicle?.vehicle_type === filters.value.vehicle_type);
             }
-
-            // Date Range filter
-            if (filters.value.dateRange) {
-                const now = new Date();
-                filtered = filtered.filter((t) => {
-                    const date = new Date(t.date_time);
-                    if (filters.value.dateRange === "today") {
-                        return date.toDateString() === now.toDateString();
-                    }
-                    if (filters.value.dateRange === "week") {
-                        const weekAgo = new Date();
-                        weekAgo.setDate(now.getDate() - 7);
-                        return date >= weekAgo && date <= now;
-                    }
-                    if (filters.value.dateRange === "month") {
-                        return (
-                            date.getMonth() === now.getMonth() &&
-                            date.getFullYear() === now.getFullYear()
-                        );
-                    }
-                    return true;
-                });
-            }
-
-            // Custom Date Range filter
-            if (filters.value.dateFrom && filters.value.dateTo) {
-                filtered = filtered.filter(t => {
-                    if (!t.date_time) return false;
-
-                    const txDate = new Date(t.date_time).setHours(0, 0, 0, 0);
-                    const from   = new Date(filters.value.dateFrom).setHours(0, 0, 0, 0);
-                    const to     = new Date(filters.value.dateTo).setHours(23, 59, 59, 999);
-
-                    return txDate >= from && txDate <= to;
-                });
-            }
-
-            // Repeat Offender filter
             if (filters.value.repeat_offender === true) {
-                filtered = filtered.filter(t => (t.violator?.transactions_count || 0) >= 2);
+                items = items.filter(t => (t.violator?.transactions_count || 0) >= 2);
             } else if (filters.value.repeat_offender === false) {
-                filtered = filtered.filter(t => (t.violator?.transactions_count || 0) <= 1);
+                items = items.filter(t => (t.violator?.transactions_count || 0) <= 1);
             }
-
-            // Address filter
-            if (filters.value.address) {
-                const search = filters.value.address.toLowerCase();
-                filtered = filtered.filter(tx => {
-                    const fullAddress = `${tx.violator?.barangay || ''} ${tx.violator?.city || ''} ${tx.violator?.province || ''}`.toLowerCase();
-                    return fullAddress.includes(search);
-                });
-            }
-
-            return filtered;
+            return items;
         });
 
         // Calculate visible page numbers for pagination (uses BACKEND pagination data)
@@ -825,9 +760,15 @@ export default {
         const loadTransactions = async (page = 1) => {
             try {
                 loading.value = true;
+                const { search, address, dateRange, dateFrom, dateTo } = filters.value;
                 const response = await adminAPI.getTransactions({
                     page: page,
-                    per_page: perPage.value
+                    per_page: perPage.value,
+                    search,
+                    address,
+                    dateRange,
+                    dateFrom,
+                    dateTo
                 });
 
                 if (response.data.status === "success") {
@@ -858,7 +799,11 @@ export default {
         };
 
         const changePerPage = () => {
-            loadTransactions(1); // Load first page with new per_page
+            loadTransactions(1);
+        };
+
+        const onSearchClick = () => {
+            loadTransactions(1);
         };
 
         const viewTransaction = (transaction) => {
@@ -918,7 +863,7 @@ export default {
             loading,
             error,
             allTransactions,
-            displayedTransactions, // Use this in template - it has frontend filtering applied
+            displayedTransactions,
             filters,
             showDetailsModal,
             selectedTransaction,
@@ -938,6 +883,7 @@ export default {
             changePerPage,
             getInitials,
             userRole,
+            onSearchClick
         };
     },
 };
