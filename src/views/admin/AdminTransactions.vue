@@ -28,6 +28,16 @@
             <!-- Filters -->
             <form class="filters-card" @submit.prevent="onSearchClick">
                 <div class="filters-row">
+                    <!-- Search (first) -->
+                    <div class="filter-group">
+                        <label class="form-label">Search</label>
+                        <input
+                            v-model="filters.search"
+                            type="text"
+                            class="form-input"
+                            placeholder="Search by violator name or license..."
+                        />
+                    </div>
                     <!-- Violation Type -->
                     <div class="filter-group">
                         <label class="form-label">Violation Type</label>
@@ -81,16 +91,6 @@
                             <option :value="false">No</option>
                         </select>
                     </div>
-                    <!-- Search -->
-                    <div class="filter-group">
-                        <label class="form-label">Search</label>
-                        <input
-                            v-model="filters.search"
-                            type="text"
-                            class="form-input"
-                            placeholder="Search by violator name or license..."
-                        />
-                    </div>
                     <div class="filter-group">
                         <label class="form-label">Search</label>
                         <input 
@@ -132,7 +132,7 @@
                                 <th>Ticket Number</th>
                                 <th>Apprehending Officer</th>
                                 <th>Violator</th>
-                                <th>Violation</th>
+                                <th>Violations</th>
                                 <th>Vehicle Type</th>
                                 <th>Repeat Offender</th>
                                 <th>Address</th>
@@ -204,7 +204,14 @@
                                 </td>
                                 <td>
                                     <div class="violation-name">
-                                        {{ transaction.violation?.name }}
+                                        <template v-if="Array.isArray(transaction.violations) && transaction.violations.length">
+                                            <span v-for="(v, i) in transaction.violations" :key="v.id">
+                                                {{ v.name }}<span v-if="i < transaction.violations.length - 1">, </span>
+                                            </span>
+                                        </template>
+                                        <template v-else>
+                                            {{ transaction.violation?.name }}
+                                        </template>
                                     </div>
                                 </td>
                                 <td>
@@ -577,10 +584,15 @@
                                 <h4>Violation Details</h4>
                                 <div class="detail-grid">
                                     <div class="detail-item">
-                                        <label>Violation Type:</label>
-                                        <span>{{
-                                            selectedTransaction.violation?.name
-                                        }}</span>
+                                        <label>Violation Type(s):</label>
+                                        <span>
+                                            <template v-if="Array.isArray(selectedTransaction.violations) && selectedTransaction.violations.length">
+                                                {{ selectedTransaction.violations.map(v => v.name).join(', ') }}
+                                            </template>
+                                            <template v-else>
+                                                {{ selectedTransaction.violation?.name }}
+                                            </template>
+                                        </span>
                                     </div>
                                     <div class="detail-item full-width">
                                       <label>Description:</label>
