@@ -220,8 +220,8 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="repeat-offender" :class="getAttemptClass(transaction.violator?.transactions_count)">
-                                        {{ formatAttempt(transaction.violator?.transactions_count) }}
+                                    <div class="repeat-offender" :class="getAttemptClass(transaction.attempt_number)">
+                                        {{ formatAttempt(transaction.attempt_number) }}
                                     </div>
                                 </td>
                                 <td>

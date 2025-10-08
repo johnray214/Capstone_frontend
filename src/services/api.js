@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-   baseURL: 'https://capstonebackend-production-ed22.up.railway.app/api',
+   baseURL: 'http://127.0.0.1:8000/api',
    timeout: 60000,
    headers: {
       Accept: 'application/json',
