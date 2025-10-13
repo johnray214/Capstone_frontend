@@ -129,6 +129,20 @@
 
 
             <div class="form-actions">
+              <button 
+                type="button" 
+                @click="previewReport" 
+                :disabled="!canGenerate || previewing"
+                class="btn btn-secondary btn-sm"
+                style="margin-right: 10px;"
+              >
+                <span v-if="previewing" class="spinner"></span>
+                <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                {{ previewing ? 'Previewing...' : 'Preview Report' }}
+              </button>
               <button type="submit" class="btn btn-primary btn-sm" :disabled="generating || !canGenerate">
                 <span v-if="generating" class="spinner"></span>
                 <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -246,6 +260,59 @@
       </div>
 
     </div>
+
+    <!-- Preview Modal -->
+    <div v-if="showPreview" class="modal-overlay" @click="showPreview = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Report Preview</h3>
+          <button @click="showPreview = false" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="previewData" class="preview-info">
+            <div class="preview-meta">
+              <div class="meta-item">
+                <strong>Report Type:</strong> {{ getReportTypeLabel(previewData.type) }}
+              </div>
+              <div class="meta-item">
+                <strong>Period:</strong> {{ getPeriodLabel(previewData.period) }}
+              </div>
+              <div class="meta-item">
+                <strong>Date Range:</strong> 
+                {{ previewData.date_range?.start ? formatDate(previewData.date_range.start) : 'N/A' }} - 
+                {{ previewData.date_range?.end ? formatDate(previewData.date_range.end) : 'N/A' }}
+              </div>
+              <div class="meta-item">
+                <strong>Total Records:</strong> {{ previewData.total_records }}
+              </div>
+            </div>
+            
+            <div class="preview-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th v-for="(value, key) in previewData.preview_data[0]" :key="key">
+                      {{ key }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, index) in previewData.preview_data" :key="index">
+                    <td v-for="(value, key) in row" :key="key">
+                      {{ formatValue(value, key) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showPreview = false" class="btn btn-secondary">Close</button>
+          <button @click="generateReport" class="btn btn-primary">Generate Report</button>
+        </div>
+      </div>
+    </div>
   </SidebarLayout>
 </template>
 
@@ -263,11 +330,14 @@ export default {
   setup() {
     const generating = ref(false)
     const refreshing = ref(false)
+    const previewing = ref(false)
     const quickStats = ref({})
     const recentReports = ref([])
     const historyFilter = ref('')
     const searchQuery = ref('')
     const lastUpdated = ref('')
+    const previewData = ref(null)
+    const showPreview = ref(false)
     
     const reportForm = ref({
       type: '',
@@ -339,6 +409,65 @@ export default {
   }
 };
     
+    // Preview report
+    const previewReport = async () => {
+      if (!canGenerate.value) return;
+
+      try {
+        previewing.value = true;
+
+        const payload = {
+          type: reportForm.value.type,
+          period: reportForm.value.period,
+          start_date: reportForm.value.period === 'custom' ? reportForm.value.start_date : undefined,
+          end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined,
+        };
+
+        const response = await adminAPI.previewReport(payload);
+        const data = response.data?.data || {};
+
+        previewData.value = {
+          type: data.type,
+          period: data.period,
+          date_range: data.date_range,
+          preview_data: data.preview_data,
+          total_records: data.total_records,
+        };
+
+        showPreview.value = true;
+
+        await Swal.fire({
+          title: '✅ Preview Generated',
+          text: `Found ${data.total_records} records for ${data.type} report`,
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+
+      } catch (error) {
+        console.error('Failed to preview report:', error);
+
+        let errorMessage = 'Failed to preview report. Please try again.';
+        const message = error?.response?.data?.message;
+        const errors = error?.response?.data?.errors;
+
+        if (errors) {
+          const firstKey = Object.keys(errors)[0];
+          errorMessage = `${firstKey} - ${errors[firstKey]?.[0] || ''}`;
+        } else if (message) {
+          errorMessage = message;
+        }
+
+        await Swal.fire({
+          title: '❌ Error',
+          text: errorMessage,
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        previewing.value = false;
+      }
+    };
+
     // Report generation
 const generateReport = async () => {
   if (!canGenerate.value) return;
@@ -699,6 +828,7 @@ const generateReport = async () => {
     return {
       generating,
       refreshing,
+      previewing,
       quickStats,
       recentReports,
       historyFilter,
@@ -707,6 +837,7 @@ const generateReport = async () => {
       reportForm,
       canGenerate,
       filteredReports,
+      previewReport,
       generateReport,
       viewReport,
       downloadReport,
@@ -717,6 +848,8 @@ const generateReport = async () => {
       getReportTypeClass,
       formatNumber,
       formatCurrency,
+      previewData,
+      showPreview,
       formatDate,
       formatLabel,
       formatValue,
@@ -1389,5 +1522,123 @@ const generateReport = async () => {
 .file-badge.pdf { background-color: #e53e3e; color: white; }
 .file-badge.xlsx { background-color: #38a169; color: white; }
 .file-badge.docx { background-color: #3182ce; color: white; }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.preview-info {
+  margin-bottom: 20px;
+}
+
+.preview-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
+.preview-meta .meta-item {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.preview-table {
+  overflow-x: auto;
+}
+
+.preview-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.preview-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.preview-table tbody tr:hover {
+  background-color: #f9fafb;
+}
 
 </style>

@@ -150,14 +150,7 @@
         <!-- Common Violations -->
         <section class="violations-card" aria-label="Top Violations">
           <header class="card-header">
-            <h3>Top Violations</h3>
-            <router-link to="/admin/violations" class="view-all-btn" aria-label="View all violations">
-              View All
-              <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" overflow="visible" aria-hidden="true">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </router-link>
+            <h3>Top 5 Violations</h3>
           </header>
           <div class="violations-list">
             <article 
@@ -213,15 +206,6 @@
               </svg>
               Target: {{ performanceTarget }}
             </button>
-            <router-link to="/admin/users" class="primary-btn" aria-label="Manage Enforcers">
-              <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" overflow="visible" aria-hidden="true">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              Manage Enforcers
-            </router-link>
           </div>
         </header>
         <div class="table-wrapper">
@@ -289,6 +273,125 @@
             <p>No enforcer data available</p>
           </div>
         </div>
+      </section><br>
+
+      <!-- Unsettled Payments Section -->
+      <section class="dashboard-grid">
+        <!-- Unsettled Violators Card -->
+        <section class="unsettled-card" aria-label="Unsettled Payments">
+          <header class="card-header">
+            <div class="header-content">
+              <svg class="header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <path d="M12 17h.01"></path>
+              </svg>
+              <div class="header-text">
+                <h3>Unsettled Payments</h3>
+                <p class="header-subtitle">Total {{ unsettledViolators ? unsettledViolators.length : 0 }} Violators (3-5 Days Pending)</p>
+              </div>
+            </div>
+            <div class="header-badges">
+              <span class="badge badge-warning">Total {{ unsettledViolators ? unsettledViolators.length : 0 }} Violators</span>
+              <span class="badge badge-date">{{ getCurrentDate() }}</span>
+            </div>
+          </header>
+          
+          <!-- Debug info -->
+          <div v-if="!unsettledViolators" style="padding: 10px; background: #f0f0f0; margin: 10px 0; border-radius: 4px;">
+            <p>Debug: unsettledViolators is {{ unsettledViolators }}</p>
+            <p v-if="debugInfo">Pending transactions in DB: {{ debugInfo.pending_transactions_count }}</p>
+            <p v-if="debugInfo">Unsettled violators found: {{ debugInfo.unsettled_violators_count }}</p>
+          </div>
+          
+          <!-- Debug info for locations -->
+          <div v-if="!locationHeatmap || locationHeatmap.length === 0" style="padding: 10px; background: #f0f0f0; margin: 10px 0; border-radius: 4px;">
+            <p>Debug: locationHeatmap is {{ locationHeatmap }}</p>
+            <p v-if="locationHeatmap">Location count: {{ locationHeatmap.length }}</p>
+          </div>
+          
+          <div v-else-if="unsettledViolators.length === 0" class="empty-state">
+            <svg width="40" height="40" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 12l2 2 4-4"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            <p>No unsettled payments found - all violators have paid their fines!</p>
+          </div>
+          
+          <div v-else class="violators-list">
+            <article 
+              v-for="(violator, index) in unsettledViolators.slice(0, 10)" 
+              :key="violator.id"
+              class="violator-item"
+              :class="`urgency-${violator.urgency_level}`"
+              tabindex="0"
+              :aria-label="`${violator.name}, ${violator.pending_count} pending payments, ₱${violator.total_amount.toLocaleString()} total`"
+            >
+              <div class="violator-rank">{{ index + 1 }}</div>
+              <div class="violator-info">
+                <p class="violator-name">{{ violator.name }}</p>
+                <p class="violator-stats">
+                  <span class="cases">{{ violator.pending_count }} pending</span>
+                  <span class="amount">₱{{ violator.total_amount.toLocaleString() }}</span>
+                </p>
+              </div>
+              <div class="violator-progress" aria-hidden="true">
+                <div 
+                  class="progress-fill"
+                  :class="`urgency-${violator.urgency_level}`"
+                  :style="{ width: `${Math.min((violator.total_amount / 10000) * 100, 100)}%` }"
+                ></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Violation Heatmap Card -->
+        <section class="heatmap-card" aria-label="Violation Heatmap">
+          <header class="card-header">
+            <div class="header-content">
+              <svg class="header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <h3>Violation Heatmap</h3>
+            </div>
+            <span class="badge badge-info">Total {{ locationHeatmap ? locationHeatmap.length : 0 }} Locations</span>
+          </header>
+          
+          <div v-if="!locationHeatmap || locationHeatmap.length === 0" class="empty-state">
+            <svg width="40" height="40" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <p>No location data available</p>
+          </div>
+          
+          <div v-else class="heatmap-container">
+            <div class="map-container">
+              <div id="violation-map" class="violation-map"></div>
+            </div>
+            
+            <!-- Heatmap Legend -->
+            <div class="heatmap-legend">
+              <div class="legend-title">Violation Intensity</div>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <div class="legend-pin intensity-low"></div>
+                  <span>Low (1-2)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-pin intensity-medium"></div>
+                  <span>Medium (3-5)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-pin intensity-high"></div>
+                  <span>High (6+)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- Quick Actions -->
@@ -451,9 +554,12 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
+
+// Declare global Leaflet variable
+/* global L */
 
 export default {
   name: 'AdminDashboard',
@@ -469,6 +575,9 @@ export default {
     const monthlyData = ref([])
     const yearlyData = ref([])
     const trendsData = ref({})
+    const unsettledViolators = ref([])
+    const locationHeatmap = ref([])
+    const debugInfo = ref(null)
     
     // Filter states
     const selectedPeriod = ref('month')
@@ -671,6 +780,8 @@ export default {
     
         if (response.data.status === 'success') {
           const data = response.data.data
+          console.log('Dashboard data received:', data)
+          console.log('Unsettled violators:', data.unsettled_violators)
           stats.value = data.stats || {}
           commonViolations.value = data.common_violations || []
           enforcerPerformance.value = data.enforcer_performance || []
@@ -678,6 +789,12 @@ export default {
           monthlyData.value = data.monthly_trends || []
           yearlyData.value = data.yearly_trends || []
           trendsData.value = data.trends || {}
+          unsettledViolators.value = data.unsettled_violators || []
+          locationHeatmap.value = data.location_heatmap || []
+          debugInfo.value = data.debug_info || null
+          console.log('Unsettled violators set to:', unsettledViolators.value)
+          console.log('Location heatmap:', locationHeatmap.value)
+          console.log('Debug info:', debugInfo.value)
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
@@ -717,6 +834,123 @@ export default {
         month: 'short',
         day: 'numeric'
       })
+    }
+
+    const getCurrentDate = () => {
+      const now = new Date()
+      return now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+
+    const getHeatmapIntensity = (count, allLocations) => {
+      if (!allLocations || allLocations.length === 0) return 'low'
+      
+      const maxCount = Math.max(...allLocations.map(l => l.count))
+      const intensity = count / maxCount
+      
+      if (intensity >= 0.7) return 'high'
+      if (intensity >= 0.4) return 'medium'
+      return 'low'
+    }
+
+    let map = null
+
+    const initializeMap = () => {
+      // Wait for DOM to be ready
+      nextTick(() => {
+        const mapElement = document.getElementById('violation-map')
+        if (!mapElement || map) return
+
+        // Initialize map centered on Echague, Isabela
+        map = L.map('violation-map').setView([16.7058, 121.6670], 15)
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(map)
+
+        // Add markers for each location
+        if (locationHeatmap.value && locationHeatmap.value.length > 0) {
+          addMapMarkers()
+        }
+      })
+    }
+
+    const addMapMarkers = () => {
+      if (!map || !locationHeatmap.value) return
+
+      // Specific coordinates for the seeder locations
+      const locationCoordinates = {
+        'ISU': [16.7058, 121.6670], // Isabela State University, Echague
+        'Savemore': [16.7045, 121.6650], // Savemore Echague
+        'Banchetto': [16.7065, 121.6680], // Banchetto Echague
+        // Fallback coordinates for other locations
+        'Manila': [14.5995, 120.9842],
+        'Quezon City': [14.6760, 121.0437],
+        'Makati': [14.5547, 121.0244],
+        'Taguig': [14.5176, 121.0509],
+        'Pasig': [14.5764, 121.0851],
+        'Mandaluyong': [14.5794, 121.0359],
+        'Marikina': [14.6507, 121.1029],
+        'Parañaque': [14.4793, 121.0198],
+        'Las Piñas': [14.4506, 120.9828],
+        'Muntinlupa': [14.4146, 121.0332],
+        'Caloocan': [14.6548, 120.9843],
+        'Malabon': [14.6602, 120.9569],
+        'Navotas': [14.6783, 120.9409],
+        'Valenzuela': [14.6932, 120.9679],
+        'San Juan': [14.6019, 121.0355],
+        'Pateros': [14.5407, 121.0685],
+        'Pasay': [14.5378, 121.0014],
+        'Main Street': [14.5995, 120.9842],
+        'Park Avenue': [14.6760, 121.0437],
+        'Oak Street': [14.5547, 121.0244],
+        'Pine Road': [14.5176, 121.0509],
+        'Elm Street': [14.5764, 121.0851],
+        'Maple Drive': [14.5794, 121.0359],
+        'Cedar Lane': [14.6507, 121.1029],
+        'Birch Street': [14.4793, 121.0198]
+      }
+
+      locationHeatmap.value.forEach(location => {
+        const coords = locationCoordinates[location.location] || [
+          14.5995 + (Math.random() - 0.5) * 0.1, // Random coordinates around Manila
+          120.9842 + (Math.random() - 0.5) * 0.1
+        ]
+
+        const intensity = getHeatmapIntensity(location.count, locationHeatmap.value)
+        const color = intensity === 'high' ? '#ef4444' : intensity === 'medium' ? '#f59e0b' : '#22c55e'
+        const radius = intensity === 'high' ? 8 : intensity === 'medium' ? 7 : 6
+
+        const marker = L.circleMarker(coords, {
+          radius: radius,
+          fillColor: color,
+          color: '#ffffff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(map)
+
+        marker.bindPopup(`
+          <div class="map-popup">
+            <h4>${location.location}</h4>
+            <p><strong>Violations:</strong> ${location.count}</p>
+            <p><strong>Total Amount:</strong> ₱${location.total_amount.toLocaleString()}</p>
+            <p><strong>Intensity:</strong> ${intensity.charAt(0).toUpperCase() + intensity.slice(1)}</p>
+          </div>
+        `)
+      })
+    }
+
+    const updateMap = () => {
+      if (map) {
+        map.remove()
+        map = null
+      }
+      initializeMap()
     }
     
     const formatChartLabel = (dataPoint, period) => {
@@ -803,7 +1037,18 @@ export default {
     
     onMounted(() => {
       loadDashboardData()
+      // Initialize map after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        initializeMap()
+      }, 1000)
     })
+
+    // Watch for changes in location heatmap data
+    watch(locationHeatmap, () => {
+      if (locationHeatmap.value && locationHeatmap.value.length > 0) {
+        updateMap()
+      }
+    }, { deep: true })
     
     return {
       loading,
@@ -825,6 +1070,10 @@ export default {
       loadDashboardData,
       formatCurrency,
       formatDate,
+      getCurrentDate,
+      getHeatmapIntensity,
+      initializeMap,
+      updateMap,
       formatChartLabel,
       getPeriodLabel,
       getInitials,
@@ -838,7 +1087,10 @@ export default {
       closeModal,
       handlePeriodChange,
       selectedYear,
-      availableYears
+      availableYears,
+      unsettledViolators,
+      locationHeatmap,
+      debugInfo
     }
   }
 }
@@ -945,7 +1197,7 @@ export default {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
   margin: 32px 0;
 }
@@ -1690,7 +1942,7 @@ export default {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 24px;
 }
 
@@ -2054,8 +2306,16 @@ export default {
   }
 }
 
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
-  .violation-stats {
+  .violation-stats,
+  .violator-stats,
+  .location-stats {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
@@ -2077,28 +2337,599 @@ export default {
   .modal-content {
     margin: 10px;
   }
+  
+  .violators-list,
+  .locations-list {
+    padding: 16px 20px 20px 20px;
+  }
+  
+  .violator-item,
+  .location-item {
+    padding: 16px 0;
+    gap: 16px;
+  }
 }
 
 /* Scroll Styles */
 .violations-list::-webkit-scrollbar,
+.violators-list::-webkit-scrollbar,
+.locations-list::-webkit-scrollbar,
+.heatmap-container::-webkit-scrollbar,
 .table-wrapper::-webkit-scrollbar {
   width: 6px;
 }
 
 .violations-list::-webkit-scrollbar-track,
+.violators-list::-webkit-scrollbar-track,
+.locations-list::-webkit-scrollbar-track,
+.heatmap-container::-webkit-scrollbar-track,
 .table-wrapper::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
 
 .violations-list::-webkit-scrollbar-thumb,
+.violators-list::-webkit-scrollbar-thumb,
+.locations-list::-webkit-scrollbar-thumb,
+.heatmap-container::-webkit-scrollbar-thumb,
 .table-wrapper::-webkit-scrollbar-thumb {
   background: rgba(59, 130, 246, 0.3);
   border-radius: 3px;
 }
 
 .violations-list::-webkit-scrollbar-thumb:hover,
+.violators-list::-webkit-scrollbar-thumb:hover,
+.locations-list::-webkit-scrollbar-thumb:hover,
+.heatmap-container::-webkit-scrollbar-thumb:hover,
 .table-wrapper::-webkit-scrollbar-thumb:hover {
   background: rgba(59, 130, 246, 0.5);
+}
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Card Styles */
+.unsettled-card,
+.heatmap-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.unsettled-card {
+  border-left: 4px solid #f59e0b;
+}
+
+.heatmap-card {
+  border-left: 4px solid #3b82f6;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.header-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.badge-date {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* Violator and Location Lists */
+.violators-list {
+  padding: 24px 32px 32px 32px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.locations-list {
+  padding: 24px 32px 32px 32px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.violator-item,
+.location-item {
+  display: flex;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  gap: 20px;
+  transition: all 0.2s ease;
+}
+
+.violator-item:last-child,
+.location-item:last-child {
+  border-bottom: none;
+}
+
+.violator-item:hover,
+.location-item:hover {
+  background: rgba(59, 130, 246, 0.02);
+  margin: 0 -16px;
+  padding: 20px 16px;
+  border-radius: 12px;
+}
+
+.violator-rank,
+.location-rank {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.violator-info,
+.location-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.violator-name,
+.location-name {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+}
+
+.violator-stats,
+.location-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.violator-progress,
+.location-progress {
+  width: 80px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.progress-fill.urgency-warning {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-fill.urgency-alert {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.progress-fill.urgency-info {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.progress-fill:not(.urgency-warning):not(.urgency-alert):not(.urgency-info) {
+  background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+/* Heatmap Styles */
+.heatmap-container {
+  padding: 24px 32px 32px 32px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.map-container {
+  height: 350px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.violation-map {
+  height: 100%;
+  width: 100%;
+}
+
+.map-popup {
+  font-family: inherit;
+}
+
+.map-popup h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.map-popup p {
+  margin: 0 0 4px 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.heatmap-legend {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.legend-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.legend-items {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-pin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.legend-pin.intensity-low {
+  background: #22c55e;
+}
+
+.legend-pin.intensity-medium {
+  background: #f59e0b;
+}
+
+.legend-pin.intensity-high {
+  background: #ef4444;
+}
+
+.legend-item span {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.violators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.violator-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.violator-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.violator-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.violator-avatar {
+  width: 40px;
+  height: 40px;
+  background: #fef3c7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #92400e;
+}
+
+.violator-details h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.violator-details p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.violation-count {
+  color: #f59e0b !important;
+  font-weight: 500;
+}
+
+.total-amount {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+.violator-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Small Violator Boxes */
+.violators-grid-small {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.violator-box {
+  background: #f9fafb;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.violator-box.urgency-warning {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.violator-box.urgency-alert {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+}
+
+.violator-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.violator-box h5 {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.violator-box .amount {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.violator-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.days-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.days-badge.urgency-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.days-badge.urgency-alert {
+  background: #ef4444;
+  color: white;
+}
+
+.count-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: #6b7280;
+  color: white;
+}
+
+/* Heatmap Section */
+.heatmap-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.heatmap-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.heatmap-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.heatmap-item:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.location-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.location-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.location-stats .count {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.location-stats .amount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.view-more {
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
 }
 </style>

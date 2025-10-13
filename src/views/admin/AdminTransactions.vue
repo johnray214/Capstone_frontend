@@ -135,7 +135,7 @@
                                 <th>Violations</th>
                                 <th>Vehicle Type</th>
                                 <th>Repeat Offender</th>
-                                <th>Address</th>
+                                <th>Location</th>
                                 <th>Date</th>
 											<th>Fine Amount</th>
                                 <th>Remarks</th>
@@ -225,7 +225,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                       {{ transaction.violator?.barangay }} {{ transaction.violator?.city }}{{ transaction.violator?.province ? ', ' + transaction.violator.province : '' }}
+                                    <div class="location-info">
+                                        {{ transaction.location || 'N/A' }}
+                                    </div>
                                 </td>
                                 <td class="date-time">
                                   <div class="date">{{ formatDateTime(transaction.date_time).date }}</div>

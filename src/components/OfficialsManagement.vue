@@ -83,8 +83,7 @@
                   <th>Role</th>
                   <th>Office</th>
                   <th>Status</th>
-                  <th>Created</th>
-                  <th>Last Login</th>
+                  <th>Date Created</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -135,7 +134,6 @@
                     </span>
                   </td>
                   <td>{{ formatDateTime(user.created_at) }}</td>
-                  <td>{{ formatDateTime(user.last_login_at) || 'Never' }}</td>
                   <td>
                     <div class="action-buttons">
                       <button @click="editUser(user)" class="btn-icon-sm btn-edit" title="Edit">
@@ -261,6 +259,11 @@
             </div>
             
             <div class="form-group">
+              <label class="form-label">Extension (Jr., Sr., III, etc.)</label>
+              <input v-model="userForm.extension" type="text" class="form-input" placeholder="e.g., Jr., Sr., III" />
+            </div>
+            
+            <div class="form-group">
               <label class="form-label">Email (optional)</label>
               <input v-model="userForm.email" type="email" class="form-input" />
             </div>
@@ -295,105 +298,32 @@
               </select>
             </div>
             
-            <div class="form-group">
+            <div v-if="showEditModal" class="form-group">
               <label class="form-label">
-                Password {{ showEditModal ? '' : '*' }}
-                <small v-if="showEditModal" class="text-muted">(Leave empty to keep current password)</small>
+                Password
+                <small class="text-muted">(Leave empty to keep current password)</small>
               </label>
               <div class="password-input-container">
-              <div class="password-input">
-                <input 
-                  v-model="userForm.password" 
-                  :type="showPassword ? 'text' : 'password'"
-                  class="form-input" 
-                    :class="{
-                      'password-weak': passwordStrength === 'weak',
-                      'password-medium': passwordStrength === 'medium',
-                      'password-strong': passwordStrength === 'strong',
-                      'has-error': passwordErrors.length > 0
-                    }"
-                    :placeholder="showEditModal ? 'Leave blank to keep current password' : 'Enter a secure password'"
-                    :required="!showEditModal"
+                <div class="password-input">
+                  <input 
+                    v-model="userForm.password" 
+                    :type="showPassword ? 'text' : 'password'"
+                    class="form-input" 
+                    placeholder="Leave blank to keep current password"
                     autocomplete="new-password"
-                />
-                <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-                  <span v-if="showPassword">🙈</span>
-                  <span v-else>👁️</span>
-                </button>
+                  />
+                  <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                    <span v-if="showPassword">🙈</span>
+                    <span v-else>👁️</span>
+                  </button>
                 </div>
-                
-                <!-- Password Strength Indicator -->
-                <div v-if="userForm.password && passwordStrength" class="password-strength">
-                  <div class="strength-bar">
-                    <div 
-                      class="strength-fill"
-                      :class="getPasswordStrengthClass()"
-                      :style="{ width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%' }"
-                    ></div>
-                  </div>
-                </div>
-                
-                <!-- Password Requirements -->
-                <div v-if="userForm.password" class="password-requirements">
-                  <small class="requirements-title">Password Requirements:</small>
-                  <ul class="requirements-list">
-                    <li :class="{ 'requirement-met': userForm.password.length >= 8 }">
-                      <span class="requirement-icon">
-                        <svg v-if="userForm.password.length >= 8" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20,6 9,17 4,12"></polyline>
-                        </svg>
-                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </span>
-                      At least 8 characters long
-                    </li>
-                    <li :class="{ 'requirement-met': /[A-Z]/.test(userForm.password) }">
-                      <span class="requirement-icon">
-                        <svg v-if="/[A-Z]/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20,6 9,17 4,12"></polyline>
-                        </svg>
-                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </span>
-                      At least one uppercase letter (A-Z)
-                    </li>
-                    <li :class="{ 'requirement-met': /[a-z]/.test(userForm.password) }">
-                      <span class="requirement-icon">
-                        <svg v-if="/[a-z]/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20,6 9,17 4,12"></polyline>
-                        </svg>
-                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </span>
-                      At least one lowercase letter (a-z)
-                    </li>
-                    <li :class="{ 'requirement-met': /\d/.test(userForm.password) }">
-                      <span class="requirement-icon">
-                        <svg v-if="/\d/.test(userForm.password)" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20,6 9,17 4,12"></polyline>
-                        </svg>
-                        <svg v-else class="x-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </span>
-                      At least one number (0-9)
-                    </li>
-                  </ul>
-                </div>
-                
-                <!-- Password Errors -->
-                <div v-if="passwordErrors.length > 0" class="password-errors">
-                  <small v-for="error in passwordErrors" :key="error" class="error-text">
-                    {{ error }}
-                  </small>
-                </div>
+              </div>
+            </div>
+            
+            <div v-else class="form-group">
+              <div class="default-password-info" style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
+                <p style="margin: 0 0 5px 0; font-weight: 600; color: #007bff;"><strong>Default Password:</strong> Password123</p>
+                <small style="color: #6c757d;">This will be the initial password for the new user. They should change it after first login.</small>
               </div>
             </div>
 
@@ -416,7 +346,6 @@ import { adminAPI } from "@/services/api"
 import Swal from "sweetalert2"
 import { 
   getPasswordStrength, 
-  validatePasswordForSave,
   validateOptionalPassword
 } from "@/utils/passwordValidation"
 
@@ -451,6 +380,7 @@ export default {
       first_name: "",
       last_name: "",
       middle_name: "",
+      extension: "",
       email: "",
       username: "",
       status: "active",
@@ -518,11 +448,12 @@ export default {
     try {
       let payload = { ...userForm.value }
 
-        // Enhanced password validation
-        if (userForm.value.password && userForm.value.password.trim() !== "") {
-          const passwordValidation = showEditModal.value 
-            ? validateOptionalPassword(userForm.value.password.trim())
-            : validatePasswordForSave(userForm.value.password.trim())
+        // Set default password for new users
+        if (!showEditModal.value) {
+          payload.password = 'Password123'
+        } else if (userForm.value.password && userForm.value.password.trim() !== "") {
+          // Enhanced password validation for edit mode
+          const passwordValidation = validateOptionalPassword(userForm.value.password.trim())
             
           if (!passwordValidation.isValid) {
             passwordErrors.value = passwordValidation.errors
@@ -532,19 +463,10 @@ export default {
               html: passwordValidation.errors.join('<br>'),
               showConfirmButton: true
             })
-          saving.value = false
-          return
-        }
+            saving.value = false
+            return
+          }
           payload.password = userForm.value.password.trim()
-        } else if (showEditModal.value) {
-          // Keep old password when editing
-          delete payload.password
-        } else {
-          // Password is required for new users
-          passwordErrors.value = ['Password is required']
-          Swal.fire("Error", "Password is required for new users", "error")
-          saving.value = false
-          return
         }
 
         // Reset password errors if validation passes
