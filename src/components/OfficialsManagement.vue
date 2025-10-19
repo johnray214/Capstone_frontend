@@ -1411,7 +1411,7 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
   letter-spacing: 0.5px;
 }
 
-.status-active {
+.status-activated {
   background: linear-gradient(135deg, #dcfce7, #bbf7d0);
   color: #166534;
 }
@@ -1421,7 +1421,7 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
   color: #92400e;
 }
 
-.status-deactivate {
+.status-deactivated {
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   color: #991b1b;
 }
@@ -1599,7 +1599,6 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
   padding: 20px;
 }
 

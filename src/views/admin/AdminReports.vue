@@ -129,20 +129,6 @@
 
 
             <div class="form-actions">
-              <button 
-                type="button" 
-                @click="previewReport" 
-                :disabled="!canGenerate || previewing"
-                class="btn btn-secondary btn-sm"
-                style="margin-right: 10px;"
-              >
-                <span v-if="previewing" class="spinner"></span>
-                <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                {{ previewing ? 'Previewing...' : 'Preview Report' }}
-              </button>
               <button type="submit" class="btn btn-primary btn-sm" :disabled="generating || !canGenerate">
                 <span v-if="generating" class="spinner"></span>
                 <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -154,6 +140,80 @@
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Report Preview Section -->
+      <div v-if="previewData && canGenerate" class="report-preview-section">
+        <div class="preview-header">
+          <h3>Report Preview</h3>
+          <div class="preview-meta">
+            <div class="meta-item">
+              <strong>Report Type:</strong> {{ getReportTypeLabel(previewData.type) }}
+            </div>
+            <div class="meta-item">
+              <strong>Period:</strong> {{ getPeriodLabel(previewData.period) }}
+            </div>
+            <div class="meta-item">
+              <strong>Date Range:</strong> 
+              {{ previewData.date_range?.start ? formatDate(previewData.date_range.start) : 'N/A' }} - 
+              {{ previewData.date_range?.end ? formatDate(previewData.date_range.end) : 'N/A' }}
+            </div>
+            <div class="meta-item">
+              <strong>Total Records:</strong> {{ previewData.total_records }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="preview-table">
+          <div class="table-header">
+            <div class="table-info">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, previewData.preview_data.length) }} of {{ previewData.preview_data.length }} records
+            </div>
+            <div class="table-controls">
+              <select v-model="itemsPerPage" class="page-size-select">
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+              </select>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th v-for="(value, key) in previewData.preview_data[0]" :key="key">
+                  {{ key }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, index) in paginatedData" :key="index">
+                <td v-for="(value, key) in row" :key="key">
+                  {{ formatValue(value, key) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination" v-if="totalPages > 1">
+            <button 
+              @click="currentPage = Math.max(1, currentPage - 1)" 
+              :disabled="currentPage === 1"
+              class="pagination-btn"
+            >
+              Previous
+            </button>
+            <span class="pagination-info">
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+            <button 
+              @click="currentPage = Math.min(totalPages, currentPage + 1)" 
+              :disabled="currentPage === totalPages"
+              class="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -287,6 +347,10 @@
               </div>
             </div>
             
+            <div class="preview-actions">
+              <button @click="generateReport" class="btn btn-primary">Generate Report</button>
+            </div>
+            
             <div class="preview-table">
               <table>
                 <thead>
@@ -309,7 +373,6 @@
         </div>
         <div class="modal-footer">
           <button @click="showPreview = false" class="btn btn-secondary">Close</button>
-          <button @click="generateReport" class="btn btn-primary">Generate Report</button>
         </div>
       </div>
     </div>
@@ -317,7 +380,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
 import Swal from 'sweetalert2'
@@ -338,12 +401,14 @@ export default {
     const lastUpdated = ref('')
     const previewData = ref(null)
     const showPreview = ref(false)
+    const currentPage = ref(1)
+    const itemsPerPage = ref(25)
     
     const reportForm = ref({
       type: '',
       period: '',
-      start_date: '',
-      end_date: '',
+      start_date: '2022-01-01', // Default start date
+      end_date: new Date().toISOString().split('T')[0], // Current date
       export_formats: ['pdf'],
       include_charts: false,
       include_details: false,
@@ -371,6 +436,18 @@ export default {
         return hasBase && reportForm.value.start_date && reportForm.value.end_date
       }
       return hasBase
+    })
+
+    const totalPages = computed(() => {
+      if (!previewData.value?.preview_data) return 0
+      return Math.ceil(previewData.value.preview_data.length / itemsPerPage.value)
+    })
+
+    const paginatedData = computed(() => {
+      if (!previewData.value?.preview_data) return []
+      const start = (currentPage.value - 1) * itemsPerPage.value
+      const end = start + itemsPerPage.value
+      return previewData.value.preview_data.slice(start, end)
     })
     
     const filteredReports = computed(() => {
@@ -423,8 +500,12 @@ export default {
           end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined,
         };
 
+        console.log('🔍 DEBUG: Manual preview payload:', payload);
         const response = await adminAPI.previewReport(payload);
         const data = response.data?.data || {};
+        console.log('🔍 DEBUG: Manual preview response:', data);
+        console.log('🔍 DEBUG: Manual preview total records:', data.total_records);
+        console.log('🔍 DEBUG: Manual preview data length:', data.preview_data?.length);
 
         previewData.value = {
           type: data.type,
@@ -492,7 +573,10 @@ const generateReport = async () => {
       period: reportForm.value.period,
       start_date: reportForm.value.period === 'custom' ? reportForm.value.start_date : undefined,
       end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined,
-      export_formats: reportForm.value.export_formats
+      export_formats: reportForm.value.export_formats,
+      limit: 1000,
+      per_page: 1000,
+      page_size: 1000,
     };
 
     const response = await adminAPI.generateReport(payload);
@@ -666,8 +750,8 @@ const generateReport = async () => {
       reportForm.value = {
         type: '',
         period: '',
-        start_date: '',
-        end_date: '',
+        start_date: '2022-01-01', // Default start date
+        end_date: new Date().toISOString().split('T')[0], // Current date
         export_formats: ['pdf'],
         include_charts: true,
         include_details: false,
@@ -824,6 +908,57 @@ const generateReport = async () => {
       loadQuickStats()
       loadReportHistory()
     })
+
+    // Watch for changes in report form to auto-fetch preview
+    watch(
+      () => [reportForm.value.type, reportForm.value.period, reportForm.value.start_date, reportForm.value.end_date],
+      async () => {
+        if (canGenerate.value) {
+          try {
+            previewing.value = true;
+            const payload = {
+              type: reportForm.value.type,
+              period: reportForm.value.period,
+              start_date: reportForm.value.period === 'custom' ? reportForm.value.start_date : undefined,
+              end_date: reportForm.value.period === 'custom' ? reportForm.value.end_date : undefined,
+              limit: 100, // Request more records for preview
+              per_page: 100, // Alternative parameter name
+              page_size: 100, // Another alternative
+            };
+
+            console.log('🔍 DEBUG: Preview payload being sent:', payload); // Debug log
+            const response = await adminAPI.previewReport(payload);
+            const data = response.data?.data || {};
+            console.log('🔍 DEBUG: Preview response data received:', data); // Debug log to see what backend returns
+            console.log('🔍 DEBUG: Total records in response:', data.total_records);
+            console.log('🔍 DEBUG: Preview data array length:', data.preview_data?.length);
+            console.log('🔍 DEBUG: Full preview data:', data.preview_data);
+
+            previewData.value = {
+              type: data.type,
+              period: data.period,
+              date_range: data.date_range,
+              preview_data: data.preview_data,
+              total_records: data.total_records,
+            };
+            currentPage.value = 1; // Reset to first page when new data loads
+          } catch (error) {
+            console.error('Failed to auto-preview report:', error);
+            previewData.value = null;
+          } finally {
+            previewing.value = false;
+          }
+        } else {
+          previewData.value = null;
+        }
+      },
+      { deep: true }
+    );
+
+    // Watch for changes in itemsPerPage to reset current page
+    watch(itemsPerPage, () => {
+      currentPage.value = 1;
+    });
     
     return {
       generating,
@@ -850,6 +985,10 @@ const generateReport = async () => {
       formatCurrency,
       previewData,
       showPreview,
+      currentPage,
+      itemsPerPage,
+      totalPages,
+      paginatedData,
       formatDate,
       formatLabel,
       formatValue,
@@ -1614,6 +1753,15 @@ const generateReport = async () => {
   color: #374151;
 }
 
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
 .preview-table {
   overflow-x: auto;
 }
@@ -1639,6 +1787,141 @@ const generateReport = async () => {
 
 .preview-table tbody tr:hover {
   background-color: #f9fafb;
+}
+
+/* Report Preview Section Styles */
+.report-preview-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 24px 0;
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.preview-header h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.preview-header .preview-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.preview-header .meta-item {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.report-preview-section .preview-table {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.report-preview-section .preview-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.report-preview-section .preview-table th,
+.report-preview-section .preview-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.report-preview-section .preview-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.report-preview-section .preview-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Table Header and Controls */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-size-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  color: #374151;
+}
+
+.page-size-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px 0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 </style>

@@ -1,8 +1,8 @@
 <template>
   <header class="dashboard-header">
         <div class="header-content">
-          <h1>Violators Management</h1>
-          <p>Manage Violators Information</p>
+          <h1>Violators Information</h1>
+          <p>View Violators Information</p>
         </div>
         <button class="refresh-btn" @click="loadingViolators" aria-label="Refresh Dashboard">
           <svg 

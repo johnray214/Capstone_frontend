@@ -176,7 +176,7 @@
                 <rect x="1" y="3" width="22" height="5"/>
                 <line x1="10" y1="12" x2="14" y2="12"/>
             </svg>
-            <span class="nav-text" v-if="!sidebarCollapsed">Archives</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">Archive</span>
           </router-link>
           <router-link 
             to="/admin/profile" 
@@ -818,7 +818,7 @@ const manageRoles = computed(() => {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 999;
 }
 
 .hamburger-btn {

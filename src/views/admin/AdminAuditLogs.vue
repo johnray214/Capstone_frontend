@@ -12,7 +12,16 @@
       </div>
 
       <div class="table-wrapper">
-        <table>
+        <!-- Loading Spinner -->
+        <div v-if="loading" class="loading-container">
+          <div class="circular-loader">
+            <div class="spinner"></div>
+          </div>
+          <p class="loading-text">Loading audit logs...</p>
+        </div>
+        
+        <!-- Table Content -->
+        <table v-else>
           <thead>
             <tr>
               <th>Date</th>
@@ -108,6 +117,44 @@ export default {
 .card-header .left { display:flex; gap:8px; }
 .card-header input { padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; width:280px; }
 .card-header button { padding:8px 12px; border:none; background:#1e40af; color:#fff; border-radius:8px; cursor:pointer; }
+
+/* Loading Spinner Styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 200px;
+}
+
+.circular-loader {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 16px;
+}
+
+.spinner {
+  width: 100%;
+  height: 100%;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 .muted { color:#6b7280; }
 .bold { font-weight:600; }
 .table-wrapper { width:100%; overflow:auto; }

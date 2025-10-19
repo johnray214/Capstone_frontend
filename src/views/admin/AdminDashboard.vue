@@ -114,6 +114,7 @@
                 >
                   <div 
                     class="bar-fill"
+                    :class="getBarColorClass(data.count)"
                     :style="{ 
                       height: `${(data.count / maxChartCount) * 100}%`,
                       minHeight: data.count > 0 ? '4px' : '0px'
@@ -334,6 +335,11 @@
                   <span class="cases">{{ violator.pending_count }} pending</span>
                   <span class="amount">₱{{ violator.total_amount.toLocaleString() }}</span>
                 </p>
+                <p class="violator-date">
+                  <span class="apprehension-date" :class="getDelayClass(violator.days_pending)">
+                    {{ getDelayText(violator.days_pending, violator.apprehension_date) }}
+                  </span>
+                </p>
               </div>
               <div class="violator-progress" aria-hidden="true">
                 <div 
@@ -374,19 +380,36 @@
             
             <!-- Heatmap Legend -->
             <div class="heatmap-legend">
-              <div class="legend-title">Violation Intensity</div>
-              <div class="legend-items">
-                <div class="legend-item">
-                  <div class="legend-pin intensity-low"></div>
-                  <span>Low (1-2)</span>
+              <div class="legend-section">
+                <div class="legend-title">Violation Intensity</div>
+                <div class="legend-items">
+                  <div class="legend-item">
+                    <div class="legend-pin intensity-low"></div>
+                    <span>Low (1-2)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-pin intensity-medium"></div>
+                    <span>Medium (3-5)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-pin intensity-high"></div>
+                    <span>High (6+)</span>
+                  </div>
                 </div>
-                <div class="legend-item">
-                  <div class="legend-pin intensity-medium"></div>
-                  <span>Medium (3-5)</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-pin intensity-high"></div>
-                  <span>High (6+)</span>
+              </div>
+              
+              <div class="legend-section">
+                <div class="legend-title">Locations</div>
+                <div class="legend-items">
+                  <div class="legend-item">
+                    <span>ISU</span>
+                  </div>
+                  <div class="legend-item">
+                    <span>Savemore</span>
+                  </div>
+                  <div class="legend-item">
+                    <span>Banchetto</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -557,9 +580,8 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
-
-// Declare global Leaflet variable
-/* global L */
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 export default {
   name: 'AdminDashboard',
@@ -596,7 +618,6 @@ export default {
     ]
     
     const chartPeriods = [
-      { label: 'Weekly', value: 'weekly' },
       { label: 'Monthly', value: 'monthly' },
       { label: 'Yearly', value: 'yearly' }
     ]
@@ -623,18 +644,19 @@ export default {
         },
         {
           iconSvg: `
-             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 3v18"></path>
-              <path d="M6 3h7a4 4 0 0 1 0 8H6"></path>
-              <line x1="3" y1="6" x2="18" y2="6"></line>
-              <line x1="3" y1="9" x2="18" y2="9"></line>
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10,9 9,9 8,9"></polyline>
             </svg>`,
           value: stats.value.total_transactions || 0,
           label: 'Total Transactions',
           trend: direction !== '0' 
         ? { type: direction, value: trendDisplay } 
         : { type: null, value: '0%' },
-          colorClass: 'stat-green'
+          colorClass: 'stat-blue'
         },
         {
           iconSvg: `
@@ -793,6 +815,7 @@ export default {
           locationHeatmap.value = data.location_heatmap || []
           debugInfo.value = data.debug_info || null
           console.log('Unsettled violators set to:', unsettledViolators.value)
+          console.log('🔍 DEBUG: First violator data:', unsettledViolators.value[0])
           console.log('Location heatmap:', locationHeatmap.value)
           console.log('Debug info:', debugInfo.value)
         }
@@ -826,6 +849,37 @@ export default {
     const formatCurrency = (amount) => {
       return new Intl.NumberFormat('en-PH').format(amount || 0)
     }
+
+    const getDelayText = (daysPending, apprehensionDate) => {
+      console.log('🔍 DEBUG: getDelayText called with:', { daysPending, apprehensionDate })
+      
+      if (daysPending === null || daysPending === undefined) {
+        console.log('🔍 DEBUG: daysPending is null/undefined, returning apprehension date')
+        return `Apprehended: ${apprehensionDate || 'N/A'}`
+      }
+      
+      if (daysPending >= 5) {
+        return `${daysPending} days delay`
+      } else if (daysPending >= 3) {
+        return `${daysPending} days delay`
+      } else if (daysPending > 0) {
+        return `${daysPending} day${daysPending > 1 ? 's' : ''} delay`
+      } else {
+        return `Apprehended: ${apprehensionDate || 'N/A'}`
+      }
+    }
+
+    const getDelayClass = (daysPending) => {
+      if (daysPending >= 5) {
+        return 'delay-critical'
+      } else if (daysPending >= 3) {
+        return 'delay-warning'
+      } else if (daysPending > 0) {
+        return 'delay-info'
+      } else {
+        return 'delay-normal'
+      }
+    }
     
     const formatDate = (dateString) => {
       if (!dateString) return 'Never'
@@ -856,6 +910,15 @@ export default {
       return 'low'
     }
 
+    const getBarColorClass = (count) => {
+      if (count === 0) return 'bar-color-none'
+      if (count === 1) return 'bar-color-low'
+      if (count === 2) return 'bar-color-medium'
+      if (count === 3) return 'bar-color-high'
+      if (count >= 4) return 'bar-color-very-high'
+      return 'bar-color-default'
+    }
+
     let map = null
 
     const initializeMap = () => {
@@ -884,40 +947,14 @@ export default {
 
       // Specific coordinates for the seeder locations
       const locationCoordinates = {
-        'ISU': [16.7058, 121.6670], // Isabela State University, Echague
-        'Savemore': [16.7045, 121.6650], // Savemore Echague
-        'Banchetto': [16.7065, 121.6680], // Banchetto Echague
-        // Fallback coordinates for other locations
-        'Manila': [14.5995, 120.9842],
-        'Quezon City': [14.6760, 121.0437],
-        'Makati': [14.5547, 121.0244],
-        'Taguig': [14.5176, 121.0509],
-        'Pasig': [14.5764, 121.0851],
-        'Mandaluyong': [14.5794, 121.0359],
-        'Marikina': [14.6507, 121.1029],
-        'Parañaque': [14.4793, 121.0198],
-        'Las Piñas': [14.4506, 120.9828],
-        'Muntinlupa': [14.4146, 121.0332],
-        'Caloocan': [14.6548, 120.9843],
-        'Malabon': [14.6602, 120.9569],
-        'Navotas': [14.6783, 120.9409],
-        'Valenzuela': [14.6932, 120.9679],
-        'San Juan': [14.6019, 121.0355],
-        'Pateros': [14.5407, 121.0685],
-        'Pasay': [14.5378, 121.0014],
-        'Main Street': [14.5995, 120.9842],
-        'Park Avenue': [14.6760, 121.0437],
-        'Oak Street': [14.5547, 121.0244],
-        'Pine Road': [14.5176, 121.0509],
-        'Elm Street': [14.5764, 121.0851],
-        'Maple Drive': [14.5794, 121.0359],
-        'Cedar Lane': [14.6507, 121.1029],
-        'Birch Street': [14.4793, 121.0198]
+        'ISU': [16.722201, 121.685348],
+        'Savemore': [16.705196, 121.676394],
+        'Banchetto': [16.7126, 121.682924],
       }
 
       locationHeatmap.value.forEach(location => {
         const coords = locationCoordinates[location.location] || [
-          14.5995 + (Math.random() - 0.5) * 0.1, // Random coordinates around Manila
+          14.5995 + (Math.random() - 0.5) * 0.1,
           120.9842 + (Math.random() - 0.5) * 0.1
         ]
 
@@ -932,6 +969,16 @@ export default {
           weight: 3,
           opacity: 1,
           fillOpacity: 0.9
+        }).addTo(map)
+
+        // Add location name label above the marker
+        L.marker(coords, {
+          icon: L.divIcon({
+            className: 'location-label',
+            html: `<div class="location-name-label">${location.location}</div>`,
+            iconSize: [120, 30],
+            iconAnchor: [60, 30]
+          })
         }).addTo(map)
 
         marker.bindPopup(`
@@ -1072,6 +1119,7 @@ export default {
       formatDate,
       getCurrentDate,
       getHeatmapIntensity,
+      getBarColorClass,
       initializeMap,
       updateMap,
       formatChartLabel,
@@ -1090,7 +1138,9 @@ export default {
       availableYears,
       unsettledViolators,
       locationHeatmap,
-      debugInfo
+      debugInfo,
+      getDelayText,
+      getDelayClass
     }
   }
 }
@@ -1250,6 +1300,14 @@ export default {
   background: linear-gradient(180deg, #8b5cf6, #7c3aed);
 }
 
+.stat-card.stat-orange .stat-border {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+.stat-card.stat-red .stat-border {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
 .stat-card.stat-cyan .stat-border {
   background: linear-gradient(180deg, #06b6d4, #0891b2);
 }
@@ -1288,6 +1346,14 @@ export default {
 
 .stat-card.stat-purple .stat-icon {
   background: rgba(139, 92, 246, 0.1);
+}
+
+.stat-card.stat-orange .stat-icon {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.stat-card.stat-red .stat-icon {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .stat-card.stat-cyan .stat-icon {
@@ -1589,13 +1655,42 @@ export default {
 
 .bar-fill {
   width: 100%;
-  background: linear-gradient(180deg, #3b82f6, #1e40af);
   border-radius: 8px 8px 0 0;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   position: relative;
   overflow: hidden;
   min-height: 4px;
+}
+
+/* Dynamic bar colors based on values */
+.bar-color-none {
+  background: linear-gradient(180deg, #e5e7eb, #d1d5db);
+  box-shadow: 0 4px 12px rgba(209, 213, 219, 0.3);
+}
+
+.bar-color-low {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.bar-color-medium {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.bar-color-high {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.bar-color-very-high {
+  background: linear-gradient(180deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.bar-color-default {
+  background: linear-gradient(180deg, #06b6d4, #0891b2);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
 
 .bar-fill::before {
@@ -1611,9 +1706,31 @@ export default {
 }
 
 .chart-bar:hover .bar-fill {
-  background: linear-gradient(180deg, #2563eb, #1e40af);
   transform: scaleX(1.1);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.chart-bar:hover .bar-color-none {
+  box-shadow: 0 6px 20px rgba(209, 213, 219, 0.4);
+}
+
+.chart-bar:hover .bar-color-low {
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.chart-bar:hover .bar-color-medium {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.chart-bar:hover .bar-color-high {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.chart-bar:hover .bar-color-very-high {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.chart-bar:hover .bar-color-default {
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
 }
 
 .chart-bar:hover .bar-fill::before {
@@ -1656,7 +1773,7 @@ export default {
   font-size: 0.75rem;
   font-weight: 500;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 100;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -1746,6 +1863,11 @@ export default {
   background: linear-gradient(90deg, #3b82f6, #1d4ed8);
   border-radius: 2px;
   transition: width 0.5s ease;
+}
+
+/* Top 5 Violations progress bars should use gradient blue */
+.violation-progress .progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8) !important;
 }
 
 .table-wrapper {
@@ -1873,12 +1995,12 @@ export default {
   border-radius: 50%;
 }
 
-.status-active {
+.status-activated {
   background: rgba(34, 197, 94, 0.1);
   color: #166534;
 }
 
-.status-active .status-dot {
+.status-activated .status-dot {
   background: #22c55e;
 }
 
@@ -1891,12 +2013,12 @@ export default {
   background: #f59e0b;
 }
 
-.status-deactivate {
+.status-deactivated {
   background: rgba(239, 68, 68, 0.1);
   color: #991b1b;
 }
 
-.status-deactivate .status-dot {
+.status-deactivated .status-dot {
   background: #ef4444;
 }
 
@@ -2033,7 +2155,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 100;
   animation: fadeIn 0.3s ease;
 }
 
@@ -2402,13 +2524,7 @@ export default {
   overflow: hidden;
 }
 
-.unsettled-card {
-  border-left: 4px solid #f59e0b;
-}
-
-.heatmap-card {
-  border-left: 4px solid #3b82f6;
-}
+/* Removed border-left colors from unsettled-card and heatmap-card */
 
 .card-header {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
@@ -2533,6 +2649,9 @@ export default {
   color: #0f172a;
   margin-bottom: 6px;
   font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .violator-stats,
@@ -2540,6 +2659,37 @@ export default {
   display: flex;
   gap: 16px;
   align-items: center;
+}
+
+.violator-date {
+  margin: 4px 0 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.apprehension-date {
+  font-weight: 500;
+}
+
+/* Delay status styling */
+.delay-critical {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.delay-warning {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.delay-info {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.delay-normal {
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .violator-progress,
@@ -2608,6 +2758,14 @@ export default {
 .heatmap-legend {
   border-top: 1px solid #e5e7eb;
   padding-top: 16px;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.legend-section {
+  flex: 1;
+  min-width: 200px;
 }
 
 .legend-title {
@@ -2647,6 +2805,47 @@ export default {
 
 .legend-pin.intensity-high {
   background: #ef4444;
+}
+
+/* Location Pins */
+.location-pin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.location-pin.isu {
+  background: #3b82f6;
+}
+
+.location-pin.savemore {
+  background: #10b981;
+}
+
+.location-pin.banchetto {
+  background: #f59e0b;
+}
+
+/* Location Name Labels */
+.location-label {
+  background: transparent !important;
+  border: none !important;
+}
+
+.location-name-label {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  margin-top: -35px;
 }
 
 .legend-item span {
