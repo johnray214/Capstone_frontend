@@ -632,6 +632,8 @@ const generateReport = async () => {
       confirmButtonText: 'OK'
     });
 
+    await loadReportHistory();
+
     resetForm();
   } catch (error) {
     console.error('Failed to generate report:', error);

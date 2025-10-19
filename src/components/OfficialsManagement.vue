@@ -180,28 +180,64 @@
               </div>
 
               <div class="pagination-controls">
+                <!-- Previous Button -->
                 <button
                   @click="goToPage(paginationData.current_page - 1)"
                   :disabled="paginationData.current_page === 1"
-                  class="pagination-btn"
+                  class="pagination-btn pagination-prev"
                 >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                  </svg>
                   Previous
                 </button>
 
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="['pagination-number', { active: page === paginationData.current_page }]">
-                  {{ page }}
-                </button>
+                <!-- Page Numbers -->
+                <div class="pagination-numbers">
+                  <!-- First Page -->
+                  <button
+                    v-if="paginationData.current_page > 3"
+                    @click="goToPage(1)"
+                    class="pagination-number"
+                  >
+                    1
+                  </button>
+                  
+                  <!-- Ellipsis -->
+                  <span v-if="paginationData.current_page > 4" class="pagination-ellipsis">...</span>
 
+                  <!-- Pages around current -->
+                  <button
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="goToPage(page)"
+                    :class="['pagination-number', { 'active': page === paginationData.current_page }]"
+                  >
+                    {{ page }}
+                  </button>
+
+                  <span v-if="paginationData.current_page < paginationData.last_page - 3" class="pagination-ellipsis">...</span>
+
+                  <!-- Last Page -->
+                  <button
+                    v-if="paginationData.current_page < paginationData.last_page - 2"
+                    @click="goToPage(paginationData.last_page)"
+                    class="pagination-number"
+                  >
+                    {{ paginationData.last_page }}
+                  </button>
+                </div>
+
+                <!-- Next Button -->
                 <button
                   @click="goToPage(paginationData.current_page + 1)"
                   :disabled="paginationData.current_page === paginationData.last_page"
-                  class="pagination-btn"
+                  class="pagination-btn pagination-next"
                 >
                   Next
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                  </svg>
                 </button>
               </div>
 
@@ -620,8 +656,15 @@ export default {
       const last = paginationData.value.last_page
       const pages = []
 
-      const start = Math.max(1, current - 2)
-      const end = Math.min(last, current + 2)
+      let start = Math.max(1, current - 2)
+      let end = Math.min(last, current + 2)
+      if (end - start < 4) {
+        if (start === 1) {
+          end = Math.min(last, start + 4)
+        } else if (end === last) {
+          start = Math.max(1, end - 4)
+        }
+      }
 
       for (let i = start; i <= end; i++) {
         pages.push(i)
@@ -1297,14 +1340,14 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 
 .pagination-number:hover {
   background: #f1f5f9;
-  border-color: #cbd5e1;
+  border-color: black;
   transform: translateY(-1px);
 }
 
 .pagination-number.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: white;
   border-color: #667eea;
-  color: white;
+  color: black;
   box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
 }
 

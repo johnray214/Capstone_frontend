@@ -43,8 +43,8 @@
               </td>
               <td>
                 <div class="stack">
-                  <span class="bold">{{ log.target_name || '—' }}</span>
-                  <small class="muted">{{ log.target_type || '—' }}</small>
+                  <span class="bold">{{ getTargetDisplayName(log) }}</span>
+                  <small class="muted">{{ getTargetTypeDisplay(log.target_type) }}</small>
                 </div>
               </td>
               <td class="metadata">
@@ -103,10 +103,38 @@ export default {
 
     const formatDate = (iso) => new Date(iso).toLocaleString()
 
+    const getTargetDisplayName = (log) => {
+      if (log.target_name) {
+        return log.target_name
+      }
+      if (log.target_type === 'All Violators') {
+        return 'Violation System'
+      }
+      if (log.target_type === 'Report') {
+        return 'Report System'
+      }
+      return '—'
+    }
+
+    const getTargetTypeDisplay = (targetType) => {
+      const typeMap = {
+        'All Violators': 'Violation Management',
+        'Report': 'Report System',
+        'Admin': 'Administrator',
+        'Deputy': 'Deputy Administrator',
+        'Head': 'Head Administrator',
+        'Enforcer': 'Traffic Enforcer',
+        'Violator': 'Traffic Violator',
+        'Transaction': 'Payment Transaction',
+        'Violation': 'Violation Type'
+      }
+      return typeMap[targetType] || targetType || '—'
+    }
+
     onMounted(fetchLogs)
     watch([perPage], fetchLogs)
 
-    return { logs, page, perPage, search, loading, fetchLogs, go, confirmDelete, formatDate }
+    return { logs, page, perPage, search, loading, fetchLogs, go, confirmDelete, formatDate, getTargetDisplayName, getTargetTypeDisplay }
   }
 }
 </script>

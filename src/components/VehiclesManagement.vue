@@ -997,14 +997,14 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 
 .pagination-number:hover {
   background: #f1f5f9;
-  border-color: #cbd5e1;
+  border-color: black;
   transform: translateY(-1px);
 }
 
 .pagination-number.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: white;
   border-color: #667eea;
-  color: white;
+  color: black;
   box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
 }
 
