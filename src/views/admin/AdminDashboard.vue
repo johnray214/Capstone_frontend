@@ -912,9 +912,10 @@ export default {
 
     const getBarColorClass = (count) => {
       if (count === 0) return 'bar-color-none'
-      if (count >= 1 && count <= 5) return 'bar-color-green'      // 1-5 violations = green
-      if (count >= 6 && count <= 10) return 'bar-color-orange'    // 6-10 violations = orange
-      if (count >= 11) return 'bar-color-violet'                  // 11+ violations = violet
+      if (count === 1) return 'bar-color-low'
+      if (count === 2) return 'bar-color-medium'
+      if (count === 3) return 'bar-color-high'
+      if (count >= 4) return 'bar-color-very-high'
       return 'bar-color-default'
     }
 
@@ -1661,23 +1662,28 @@ export default {
   min-height: 4px;
 }
 
-/* Dynamic bar colors based on violation count ranges */
+/* Dynamic bar colors based on values */
 .bar-color-none {
   background: linear-gradient(180deg, #e5e7eb, #d1d5db);
   box-shadow: 0 4px 12px rgba(209, 213, 219, 0.3);
 }
 
-.bar-color-green {
+.bar-color-low {
   background: linear-gradient(180deg, #22c55e, #16a34a);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
-.bar-color-orange {
+.bar-color-medium {
   background: linear-gradient(180deg, #f59e0b, #d97706);
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-.bar-color-violet {
+.bar-color-high {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.bar-color-very-high {
   background: linear-gradient(180deg, #8b5cf6, #7c3aed);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
@@ -1707,15 +1713,19 @@ export default {
   box-shadow: 0 6px 20px rgba(209, 213, 219, 0.4);
 }
 
-.chart-bar:hover .bar-color-green {
+.chart-bar:hover .bar-color-low {
   box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
 }
 
-.chart-bar:hover .bar-color-orange {
+.chart-bar:hover .bar-color-medium {
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
 }
 
-.chart-bar:hover .bar-color-violet {
+.chart-bar:hover .bar-color-high {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.chart-bar:hover .bar-color-very-high {
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
 

@@ -597,40 +597,74 @@ const generateReport = async () => {
 
     recentReports.value.unshift(reportRecord);
 
+    let downloadSuccess = true;
+    let downloadErrors = [];
+
     if (reportRecord.files.length > 0) {
-  for (const f of reportRecord.files) {
-    if (f.filename) {
+      for (const f of reportRecord.files) {
+        if (f.filename) {
+          try {
+            console.log(`Attempting to download file: ${f.filename}`);
+            const response = await adminAPI.downloadReportFile(f.filename);
+            console.log(`Download response for ${f.filename}:`, response);
+            
+            if (!response.data) {
+              throw new Error('No data received from server');
+            }
+            
+            const blob = new Blob([response.data], { type: f.mimeType || 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = f.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(link.href), 100);
+            console.log(`Successfully downloaded: ${f.filename}`);
+          } catch (err) {
+            console.error(`Failed to download file ${f.filename}:`, err);
+            console.error('Error details:', {
+              message: err.message,
+              status: err.response?.status,
+              statusText: err.response?.statusText,
+              data: err.response?.data
+            });
+            downloadSuccess = false;
+            downloadErrors.push(f.filename);
+          }
+        }
+      }
+    } else {
       try {
-        const response = await adminAPI.downloadReportFile(f.filename);
-        const blob = new Blob([response.data], { type: f.mimeType || 'application/octet-stream' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = f.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(link.href), 100);
+        const jsonContent = JSON.stringify(reportRecord.reportContent, null, 2);
+        downloadFileFromBase64(
+          btoa(jsonContent),
+          `${reportRecord.type}_report_${reportRecord.id}.json`,
+          'application/json'
+        );
       } catch (err) {
-        console.error('Failed to download file:', err);
-        alert(`Failed to download ${f.filename}`);
+        console.error('Failed to download JSON file:', err);
+        downloadSuccess = false;
+        downloadErrors.push('JSON file');
       }
     }
-  }
-} else {
-  const jsonContent = JSON.stringify(reportRecord.reportContent, null, 2);
-  downloadFileFromBase64(
-    btoa(jsonContent),
-    `${reportRecord.type}_report_${reportRecord.id}.json`,
-    'application/json'
-  );
-}
 
-    await Swal.fire({
-      title: '✅ Report Generated & Downloaded',
-      text: `Formats: ${payload.export_formats.join(', ').toUpperCase()}`,
-      icon: 'success',
-      confirmButtonText: 'OK'
-    });
+    // Show appropriate message based on download success
+    if (downloadSuccess) {
+      await Swal.fire({
+        title: '✅ Report Generated & Downloaded',
+        text: `Formats: ${payload.export_formats.join(', ').toUpperCase()}`,
+        icon: 'success',
+        confirmButtonText: 'OK'
+      });
+    } else {
+      await Swal.fire({
+        title: '⚠️ Report Generated but Download Failed',
+        text: `Failed to download: ${downloadErrors.join(', ')}. Please try downloading manually from the report history.`,
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+    }
 
     await loadReportHistory();
 
