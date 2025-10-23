@@ -75,6 +75,7 @@ export const authAPI = {
 export const adminAPI = {
     // Dashboard
     dashboard: (params) => api.get("/admin/dashboard", { params }),
+    getLocationData: (period = 'all') => api.get("/admin/dashboard", { params: { heatmap_period: period } }),
     
     //profile
     profile: () => api.get("/admin/profile"),

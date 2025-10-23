@@ -222,7 +222,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="enforcer in enforcerPerformance.slice(0, 8)" :key="enforcer.id" class="table-row" tabindex="0">
+              <tr v-for="enforcer in paginatedEnforcers" :key="enforcer.id" class="table-row" tabindex="0">
                 <td>
                   <div class="enforcer-cell">
                     <div class="avatar" aria-hidden="true">
@@ -273,6 +273,38 @@
             </svg>
             <p>No enforcer data available</p>
           </div>
+          
+          <!-- Pagination Controls -->
+          <div v-if="enforcerPerformance.length > 6" class="pagination-controls">
+            <div class="pagination-info">
+              Showing {{ (currentPage - 1) * 6 + 1 }} to {{ Math.min(currentPage * 6, enforcerPerformance.length) }} of {{ enforcerPerformance.length }} enforcers
+            </div>
+            <div class="pagination-buttons">
+              <button 
+                @click="previousPage" 
+                :disabled="currentPage === 1"
+                class="pagination-btn"
+                :class="{ disabled: currentPage === 1 }"
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Previous
+              </button>
+              <span class="page-info">{{ currentPage }} of {{ totalPages }}</span>
+              <button 
+                @click="nextPage" 
+                :disabled="currentPage === totalPages"
+                class="pagination-btn"
+                :class="{ disabled: currentPage === totalPages }"
+              >
+                Next
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </section><br>
 
@@ -305,12 +337,7 @@
             <p v-if="debugInfo">Unsettled violators found: {{ debugInfo.unsettled_violators_count }}</p>
           </div>
           
-          <!-- Debug info for locations -->
-          <div v-if="!locationHeatmap || locationHeatmap.length === 0" style="padding: 10px; background: #f0f0f0; margin: 10px 0; border-radius: 4px;">
-            <p>Debug: locationHeatmap is {{ locationHeatmap }}</p>
-            <p v-if="locationHeatmap">Location count: {{ locationHeatmap.length }}</p>
-          </div>
-          
+      
           <div v-else-if="unsettledViolators.length === 0" class="empty-state">
             <svg width="40" height="40" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M9 12l2 2 4-4"></path>
@@ -362,8 +389,64 @@
               </svg>
               <h3>Violation Heatmap</h3>
             </div>
-            <span class="badge badge-info">Total {{ locationHeatmap ? locationHeatmap.length : 0 }} Locations</span>
+            <div class="header-actions">
+              <span class="badge badge-info">Total {{ locationHeatmap ? locationHeatmap.length : 0 }} Locations</span>
+            </div>
           </header>
+          
+          <!-- Heatmap Statistics Summary -->
+          <div v-if="locationHeatmap && locationHeatmap.length > 0" class="heatmap-stats-summary">
+            <div class="stat-box">
+              <div class="stat-icon">
+                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ locationHeatmap.length }}</div>
+                <div class="stat-label">Locations</div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-icon">
+                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ totalViolationsCount }}</div>
+                <div class="stat-label">Total Violations</div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-icon">
+                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ hottestLocation?.location || 'N/A' }}</div>
+                <div class="stat-label">Hotspot Area</div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-icon">
+                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">₱{{ totalFinesAmount.toLocaleString() }}</div>
+                <div class="stat-label">Total Fines</div>
+              </div>
+            </div>
+          </div>
           
           <div v-if="!locationHeatmap || locationHeatmap.length === 0" class="empty-state">
             <svg width="40" height="40" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -381,37 +464,57 @@
             <!-- Heatmap Legend -->
             <div class="heatmap-legend">
               <div class="legend-section">
-                <div class="legend-title">Violation Intensity</div>
+                <div class="legend-title">Violation Intensity (Color)</div>
                 <div class="legend-items">
                   <div class="legend-item">
                     <div class="legend-pin intensity-low"></div>
-                    <span>Low (1-2)</span>
+                    <span>Low (1-20)</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-pin intensity-medium"></div>
-                    <span>Medium (3-5)</span>
+                    <span>Medium (21-50)</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-pin intensity-high"></div>
-                    <span>High (6+)</span>
+                    <span>High (51-100)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-pin intensity-very-high"></div>
+                    <span>Critical (100+)</span>
                   </div>
                 </div>
               </div>
               
               <div class="legend-section">
-                <div class="legend-title">Locations</div>
-                <div class="legend-items">
+                <div class="legend-title">Circle Size (Count)</div>
+                <div class="legend-items size-legend">
                   <div class="legend-item">
-                    <span>ISU</span>
+                    <div class="size-circle size-small"></div>
+                    <span>1-5</span>
                   </div>
                   <div class="legend-item">
-                    <span>Savemore</span>
+                    <div class="size-circle size-medium-small"></div>
+                    <span>6-10</span>
                   </div>
                   <div class="legend-item">
-                    <span>Banchetto</span>
+                    <div class="size-circle size-medium"></div>
+                    <span>11-20</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="size-circle size-medium-large"></div>
+                    <span>21-50</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="size-circle size-large"></div>
+                    <span>51-100</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="size-circle size-extra-large"></div>
+                    <span>100+</span>
                   </div>
                 </div>
               </div>
+              
             </div>
           </div>
         </section>
@@ -600,6 +703,8 @@ export default {
     const unsettledViolators = ref([])
     const locationHeatmap = ref([])
     const debugInfo = ref(null)
+    const isLocationPickerActive = ref(false)
+    const tempLocationMarker = ref(null)
     
     // Filter states
     const selectedPeriod = ref('month')
@@ -608,6 +713,10 @@ export default {
     const newTarget = ref(5)
     const showEditTargetModal = ref(false)
     const selectedYear = ref(new Date().getFullYear())
+    
+    // Pagination for enforcer performance
+    const currentPage = ref(1)
+    const itemsPerPage = 6
     
     // Filter options
     const filterPeriods = [
@@ -754,6 +863,17 @@ export default {
       return [...new Set(monthlyData.value.map(item => item.year))].sort((a, b) => b - a)
     })
     
+    // Pagination computed properties
+    const totalPages = computed(() => {
+      return Math.ceil(enforcerPerformance.value.length / itemsPerPage)
+    })
+    
+    const paginatedEnforcers = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage
+      const end = start + itemsPerPage
+      return enforcerPerformance.value.slice(start, end)
+    })
+    
     const chartData = computed(() => {
   switch (selectedChartPeriod.value) {
     case 'monthly':
@@ -777,6 +897,24 @@ export default {
     
     const maxChartCount = computed(() => {
       return Math.max(...chartData.value.map(d => d.count), 1)
+    })
+
+    // Heatmap statistics
+    const totalViolationsCount = computed(() => {
+      if (!locationHeatmap.value || locationHeatmap.value.length === 0) return 0
+      return locationHeatmap.value.reduce((sum, location) => sum + location.count, 0)
+    })
+
+    const totalFinesAmount = computed(() => {
+      if (!locationHeatmap.value || locationHeatmap.value.length === 0) return 0
+      return locationHeatmap.value.reduce((sum, location) => sum + parseFloat(location.total_amount || 0), 0)
+    })
+
+    const hottestLocation = computed(() => {
+      if (!locationHeatmap.value || locationHeatmap.value.length === 0) return null
+      return locationHeatmap.value.reduce((max, location) => 
+        location.count > (max?.count || 0) ? location : max
+      , null)
     })
     
     const maxViolationCount = computed(() => {
@@ -899,23 +1037,20 @@ export default {
       })
     }
 
-    const getHeatmapIntensity = (count, allLocations) => {
-      if (!allLocations || allLocations.length === 0) return 'low'
-      
-      const maxCount = Math.max(...allLocations.map(l => l.count))
-      const intensity = count / maxCount
-      
-      if (intensity >= 0.7) return 'high'
-      if (intensity >= 0.4) return 'medium'
-      return 'low'
+    const getHeatmapIntensity = (count) => {
+      if (count >= 1 && count <= 20) return 'low' // Green
+      if (count >= 21 && count <= 50) return 'medium' // Orange  
+      if (count >= 51 && count <= 100) return 'high' // Red
+      if (count > 100) return 'very-high' // Dark red
+      return 'none'
     }
 
     const getBarColorClass = (count) => {
       if (count === 0) return 'bar-color-none'
-      if (count === 1) return 'bar-color-low'
-      if (count === 2) return 'bar-color-medium'
-      if (count === 3) return 'bar-color-high'
-      if (count >= 4) return 'bar-color-very-high'
+      if (count >= 1 && count <= 10) return 'bar-color-low' // Green
+      if (count >= 11 && count <= 20) return 'bar-color-medium' // Orange
+      if (count >= 21 && count <= 30) return 'bar-color-high' // Violet
+      if (count >= 31) return 'bar-color-very-high' // Red
       return 'bar-color-default'
     }
 
@@ -945,31 +1080,54 @@ export default {
     const addMapMarkers = () => {
       if (!map || !locationHeatmap.value) return
 
-      // Specific coordinates for the seeder locations
-      const locationCoordinates = {
-        'ISU': [16.722201, 121.685348],
-        'Savemore': [16.705196, 121.676394],
-        'Banchetto': [16.7126, 121.682924],
-      }
-
       locationHeatmap.value.forEach(location => {
-        const coords = locationCoordinates[location.location] || [
-          14.5995 + (Math.random() - 0.5) * 0.1,
-          120.9842 + (Math.random() - 0.5) * 0.1
-        ]
+        // Use GPS coordinates from database if available, otherwise fallback to random coordinates
+        const coords = location.gps_latitude && location.gps_longitude 
+          ? [parseFloat(location.gps_latitude), parseFloat(location.gps_longitude)]
+          : [
+              14.5995 + (Math.random() - 0.5) * 0.1,
+              120.9842 + (Math.random() - 0.5) * 0.1
+            ]
 
-        const intensity = getHeatmapIntensity(location.count, locationHeatmap.value)
-        const color = intensity === 'high' ? '#ef4444' : intensity === 'medium' ? '#f59e0b' : '#22c55e'
-        const radius = intensity === 'high' ? 8 : intensity === 'medium' ? 7 : 6
+        const intensity = getHeatmapIntensity(location.count)
+        
+        // Dynamic circle size based on violation count
+        let radius = 5 // Base size
+        if (location.count >= 1 && location.count <= 5) {
+          radius = 8
+        } else if (location.count >= 6 && location.count <= 10) {
+          radius = 12
+        } else if (location.count >= 11 && location.count <= 20) {
+          radius = 16
+        } else if (location.count >= 21 && location.count <= 50) {
+          radius = 22
+        } else if (location.count >= 51 && location.count <= 100) {
+          radius = 28
+        } else if (location.count > 100) {
+          radius = 35
+        }
+        
+        // Dynamic color based on intensity
+        let color = '#22c55e' // Green (low)
+        if (intensity === 'medium') {
+          color = '#f97316' // Orange
+        } else if (intensity === 'high') {
+          color = '#ef4444' // Red
+        } else if (intensity === 'very-high') {
+          color = '#a855f7' // Purple
+        }
 
+        // Create circle marker with pulsing animation
         const marker = L.circleMarker(coords, {
           radius: radius,
           fillColor: color,
           color: '#ffffff',
           weight: 3,
           opacity: 1,
-          fillOpacity: 0.9
+          fillOpacity: 0.8,
+          className: 'pulsing-marker'
         }).addTo(map)
+        
 
         // Add location name label above the marker
         L.marker(coords, {
@@ -983,10 +1141,27 @@ export default {
 
         marker.bindPopup(`
           <div class="map-popup">
-            <h4>${location.location}</h4>
-            <p><strong>Violations:</strong> ${location.count}</p>
-            <p><strong>Total Amount:</strong> ₱${location.total_amount.toLocaleString()}</p>
-            <p><strong>Intensity:</strong> ${intensity.charAt(0).toUpperCase() + intensity.slice(1)}</p>
+            <div class="popup-header">
+              <h4>${location.location}</h4>
+              <span class="intensity-badge intensity-${intensity}">${intensity.charAt(0).toUpperCase() + intensity.slice(1)}</span>
+            </div>
+            <div class="popup-stats">
+              <div class="stat-row">
+                <span class="stat-label">Violations:</span>
+                <span class="stat-value">${location.count}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Total Amount:</span>
+                <span class="stat-value">₱${location.total_amount.toLocaleString()}</span>
+              </div>
+            </div>
+            ${location.gps_latitude && location.gps_longitude ? 
+              `<div class="popup-gps">
+                <span class="stat-label">GPS Coordinates:</span>
+                <span class="stat-value">${parseFloat(location.gps_latitude).toFixed(6)}, ${parseFloat(location.gps_longitude).toFixed(6)}</span>
+              </div>` : 
+              '<div class="popup-gps"><span class="stat-label">GPS:</span><span class="stat-value">Not available</span></div>'
+            }
           </div>
         `)
       })
@@ -999,6 +1174,7 @@ export default {
       }
       initializeMap()
     }
+
     
     const formatChartLabel = (dataPoint, period) => {
       if (period === 'yearly') {
@@ -1074,6 +1250,99 @@ export default {
       showEditTargetModal.value = false
       newTarget.value = performanceTarget.value
     }
+    
+    // Pagination methods
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++
+      }
+    }
+    
+    const previousPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--
+      }
+    }
+    
+    // Location picker methods
+    const toggleLocationPicker = () => {
+      isLocationPickerActive.value = !isLocationPickerActive.value
+      
+      if (isLocationPickerActive.value) {
+        // Enable map click events for location picking
+        if (map) {
+          map.on('click', handleMapClick)
+          map.getContainer().style.cursor = 'crosshair'
+        }
+      } else {
+        // Disable map click events
+        if (map) {
+          map.off('click', handleMapClick)
+          map.getContainer().style.cursor = ''
+          // Remove temporary marker if exists
+          if (tempLocationMarker.value) {
+            map.removeLayer(tempLocationMarker.value)
+            tempLocationMarker.value = null
+          }
+        }
+      }
+    }
+    
+    const handleMapClick = (e) => {
+      if (!isLocationPickerActive.value) return
+      
+      const lat = e.latlng.lat
+      const lng = e.latlng.lng
+      
+      // Remove existing temporary marker
+      if (tempLocationMarker.value) {
+        map.removeLayer(tempLocationMarker.value)
+      }
+      
+      // Add new temporary marker with circle
+      const marker = L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: '#3b82f6',
+        color: '#ffffff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+      }).addTo(map)
+      
+      const circle = L.circle([lat, lng], {
+        radius: 100,
+        color: '#3b82f6',
+        weight: 2,
+        opacity: 0.6,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1
+      }).addTo(map)
+      
+      tempLocationMarker.value = L.layerGroup([marker, circle])
+      
+      // Show confirmation dialog
+      if (confirm('Add this location to the heatmap?')) {
+        addLocationToHeatmap(lat, lng)
+        toggleLocationPicker()
+      }
+    }
+    
+    const addLocationToHeatmap = (lat, lng) => {
+      // This would typically make an API call to add the location
+      // For now, we'll just add it to the local array
+      const newLocation = {
+        location: `Custom Location ${Date.now()}`,
+        count: 1,
+        total_amount: 0,
+        lat: lat,
+        lng: lng
+      }
+      
+      locationHeatmap.value.push(newLocation)
+      
+      // Update the map with the new location
+      updateMap()
+    }
     const handlePeriodChange = (period) => {
     selectedPeriod.value = period
       }
@@ -1138,9 +1407,19 @@ export default {
       availableYears,
       unsettledViolators,
       locationHeatmap,
+      totalViolationsCount,
+      totalFinesAmount,
+      hottestLocation,
       debugInfo,
       getDelayText,
-      getDelayClass
+      getDelayClass,
+      currentPage,
+      totalPages,
+      paginatedEnforcers,
+      nextPage,
+      previousPage,
+      isLocationPickerActive,
+      toggleLocationPicker
     }
   }
 }
@@ -1674,13 +1953,13 @@ export default {
 }
 
 .bar-color-medium {
-  background: linear-gradient(180deg, #f59e0b, #d97706);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(180deg, #f97316, #ea580c);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .bar-color-high {
-  background: linear-gradient(180deg, #ef4444, #dc2626);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  background: linear-gradient(180deg, #a855f7, #9333ea);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
 }
 
 .bar-color-very-high {
@@ -2816,17 +3095,6 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.location-pin.isu {
-  background: #3b82f6;
-}
-
-.location-pin.savemore {
-  background: #10b981;
-}
-
-.location-pin.banchetto {
-  background: #f59e0b;
-}
 
 /* Location Name Labels */
 .location-label {
@@ -2846,6 +3114,264 @@ export default {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
   margin-top: -35px;
+}
+
+/* Enhanced Map Popup Styles */
+.map-popup {
+  min-width: 250px;
+  font-family: 'Inter', sans-serif;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.popup-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.intensity-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.intensity-badge.intensity-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.intensity-badge.intensity-medium {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.intensity-badge.intensity-high {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.intensity-badge.intensity-very-high {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.popup-stats {
+  margin-bottom: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.popup-gps {
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-gps .stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.popup-gps .stat-value {
+  font-size: 0.8rem;
+  color: #374151;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+
+/* Pulsing Animation for Map Markers */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.pulsing-marker {
+  animation: pulse 2s infinite;
+}
+
+/* Leaflet Circle Marker Hover Effects */
+.leaflet-interactive:hover {
+  stroke-width: 5 !important;
+  cursor: pointer;
+  filter: brightness(1.1);
+  transition: all 0.3s ease;
+}
+
+/* Map Controls Enhancement */
+.leaflet-control-zoom {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-zoom a {
+  border: none !important;
+  color: #374151 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Size Legend Circles */
+.size-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.size-circle {
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.size-small {
+  width: 16px;
+  height: 16px;
+}
+
+.size-medium-small {
+  width: 24px;
+  height: 24px;
+}
+
+.size-medium {
+  width: 32px;
+  height: 32px;
+}
+
+.size-medium-large {
+  width: 44px;
+  height: 44px;
+}
+
+.size-large {
+  width: 56px;
+  height: 56px;
+}
+
+.size-extra-large {
+  width: 70px;
+  height: 70px;
+}
+
+.size-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Heatmap Statistics Summary */
+.heatmap-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e7f0ff 100%);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-box .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.stat-box .stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive for stats summary */
+@media (max-width: 768px) {
+  .heatmap-stats-summary {
+    grid-template-columns: 1fr;
+  }
 }
 
 .legend-item span {
@@ -3130,5 +3656,113 @@ export default {
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.75rem;
+}
+
+/* Pagination Styles */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: rgba(248, 250, 252, 0.5);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 0;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.pagination-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+  padding: 0 8px;
+}
+
+@media (max-width: 768px) {
+  .pagination-controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .pagination-buttons {
+    justify-content: center;
+  }
+}
+
+/* Location Picker Styles */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-location-btn:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.add-location-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.add-location-btn svg {
+  width: 16px;
+  height: 16px;
 }
 </style>

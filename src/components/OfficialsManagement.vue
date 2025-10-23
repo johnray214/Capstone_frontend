@@ -50,9 +50,9 @@
               <label class="form-label">Status</label>
               <select v-model="userFilters.status" class="form-select">
                 <option value="">All Status</option>
-                <option value="active">Active</option>
+                <option value="activated">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="deactivate">Deactivated</option>
+                <option value="deactivated">Deactivated</option>
               </select>
             </div>
             <div class="filter-group">
@@ -145,10 +145,10 @@
                       <button 
                       @click="toggleUserStatus(user)" 
                       class="btn-icon-sm"
-                      :class="user.status === 'active' ? 'btn-danger' : 'btn-success'"
-                      :title="user.status === 'active' ? 'Deactivate' : 'Activate'"
+                      :class="user.status === 'activated' ? 'btn-danger' : 'btn-success'"
+                      :title="user.status === 'activated' ? 'Deactivated' : 'Activate'"
                     >
-                      <svg v-if="user.status === 'active'" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg v-if="user.status === 'activated'" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                         <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                       </svg>
@@ -180,64 +180,28 @@
               </div>
 
               <div class="pagination-controls">
-                <!-- Previous Button -->
                 <button
                   @click="goToPage(paginationData.current_page - 1)"
                   :disabled="paginationData.current_page === 1"
-                  class="pagination-btn pagination-prev"
+                  class="pagination-btn"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                  </svg>
                   Previous
                 </button>
 
-                <!-- Page Numbers -->
-                <div class="pagination-numbers">
-                  <!-- First Page -->
-                  <button
-                    v-if="paginationData.current_page > 3"
-                    @click="goToPage(1)"
-                    class="pagination-number"
-                  >
-                    1
-                  </button>
-                  
-                  <!-- Ellipsis -->
-                  <span v-if="paginationData.current_page > 4" class="pagination-ellipsis">...</span>
+                <button
+                  v-for="page in visiblePages"
+                  :key="page"
+                  @click="goToPage(page)"
+                  :class="['pagination-number', { active: page === paginationData.current_page }]">
+                  {{ page }}
+                </button>
 
-                  <!-- Pages around current -->
-                  <button
-                    v-for="page in visiblePages"
-                    :key="page"
-                    @click="goToPage(page)"
-                    :class="['pagination-number', { 'active': page === paginationData.current_page }]"
-                  >
-                    {{ page }}
-                  </button>
-
-                  <span v-if="paginationData.current_page < paginationData.last_page - 3" class="pagination-ellipsis">...</span>
-
-                  <!-- Last Page -->
-                  <button
-                    v-if="paginationData.current_page < paginationData.last_page - 2"
-                    @click="goToPage(paginationData.last_page)"
-                    class="pagination-number"
-                  >
-                    {{ paginationData.last_page }}
-                  </button>
-                </div>
-
-                <!-- Next Button -->
                 <button
                   @click="goToPage(paginationData.current_page + 1)"
                   :disabled="paginationData.current_page === paginationData.last_page"
-                  class="pagination-btn pagination-next"
+                  class="pagination-btn"
                 >
                   Next
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                  </svg>
                 </button>
               </div>
 
@@ -328,7 +292,7 @@
             <div class="form-group">
               <label class="form-label">Status *</label>
               <select v-model="userForm.status" class="form-select" required>
-                <option value="active">Active</option>
+                <option value="activated">Active</option>
                 <option value="inactive">Inactive</option>
                 <option value="deactivate">Deactivated</option>
               </select>
@@ -419,7 +383,7 @@ export default {
       extension: "",
       email: "",
       username: "",
-      status: "active",
+      status: "activated",
       office: "",
       password: "",
       user_type: ""
@@ -560,7 +524,7 @@ export default {
         email: user.email || "",
         username: user.username || "",
         office: user.office || "",
-        status: user.status || "active",
+        status: user.status || "activated",
         password: "",
         user_type: user.user_type || ""
       }
@@ -570,7 +534,7 @@ export default {
     }
 
     const toggleUserStatus = async (user) => {
-      const newStatus = user.status === "active" ? "deactivate" : "active"
+      const newStatus = user.status === "activated" ? "deactivated" : "activated"
       const actionWord = newStatus === "active" ? "activate" : "deactivate"
 
       const result = await Swal.fire({
@@ -578,7 +542,7 @@ export default {
         text: `Do you want to ${actionWord} ${user.first_name} ${user.last_name}?`,
         icon: "question",
         showCancelButton: true,
-        confirmButtonColor: newStatus === "active" ? "#10b981" : "#ef4444",
+        confirmButtonColor: newStatus === "activated" ? "#10b981" : "#ef4444",
         cancelButtonText: "Cancel",
         confirmButtonText: `Yes, ${actionWord}`
       })
@@ -631,7 +595,7 @@ export default {
         email: "",
         username: "",
         office: "",
-        status: "active",
+        status: "activated",
         password: "",
         user_type: ""
       }
@@ -656,15 +620,8 @@ export default {
       const last = paginationData.value.last_page
       const pages = []
 
-      let start = Math.max(1, current - 2)
-      let end = Math.min(last, current + 2)
-      if (end - start < 4) {
-        if (start === 1) {
-          end = Math.min(last, start + 4)
-        } else if (end === last) {
-          start = Math.max(1, end - 4)
-        }
-      }
+      const start = Math.max(1, current - 2)
+      const end = Math.min(last, current + 2)
 
       for (let i = start; i <= end; i++) {
         pages.push(i)
@@ -1340,14 +1297,14 @@ background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 
 .pagination-number:hover {
   background: #f1f5f9;
-  border-color: black;
+  border-color: #cbd5e1;
   transform: translateY(-1px);
 }
 
 .pagination-number.active {
-  background: white;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   border-color: #667eea;
-  color: black;
+  color: white;
   box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
 }
 
