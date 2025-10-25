@@ -1155,12 +1155,16 @@ export default {
                 <span class="stat-value">₱${location.total_amount.toLocaleString()}</span>
               </div>
             </div>
+            <div class="popup-location">
+              <span class="stat-label">📍 Location:</span>
+              <span class="stat-value">${location.location || 'Unknown Location'}</span>
+            </div>
             ${location.gps_latitude && location.gps_longitude ? 
               `<div class="popup-gps">
-                <span class="stat-label">GPS Coordinates:</span>
+                <span class="stat-label">🗺️ Coordinates:</span>
                 <span class="stat-value">${parseFloat(location.gps_latitude).toFixed(6)}, ${parseFloat(location.gps_longitude).toFixed(6)}</span>
               </div>` : 
-              '<div class="popup-gps"><span class="stat-label">GPS:</span><span class="stat-value">Not available</span></div>'
+              '<div class="popup-gps"><span class="stat-label">🗺️ GPS:</span><span class="stat-value">Not available</span></div>'
             }
           </div>
         `)
@@ -3188,6 +3192,18 @@ export default {
   font-size: 0.875rem;
   color: #1f2937;
   font-weight: 600;
+}
+
+.popup-location {
+  padding: 8px 0;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  margin: 8px -12px 0 -12px;
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 .popup-gps {
