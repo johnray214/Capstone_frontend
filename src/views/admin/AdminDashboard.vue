@@ -383,138 +383,143 @@
         <section class="heatmap-card" aria-label="Violation Heatmap">
           <header class="card-header">
             <div class="header-content">
-              <svg class="header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
+              <div class="header-text">
               <h3>Violation Heatmap</h3>
+              </div>
             </div>
             <div class="header-actions">
-              <span class="badge badge-info">Total {{ locationHeatmap ? locationHeatmap.length : 0 }} Locations</span>
+              <div class="view-toggle">
+                <button 
+                  @click="visualizationMode = 'markers'" 
+                  :class="['view-btn', { active: visualizationMode === 'markers' }]"
+                  title="Marker View"
+                >
+                  <span>Markers</span>
+                </button>
+                <button 
+                  @click="visualizationMode = 'clusters'" 
+                  :class="['view-btn', { active: visualizationMode === 'clusters' }]"
+                  title="Cluster View"
+                >
+                  <span>Clusters</span>
+                </button>
+              </div>
+              <div class="stats-badges">
+                <div class="stat-badge">
+                  <span class="stat-number">{{ locationHeatmap ? locationHeatmap.length : 0 }}</span>
+                  <span class="stat-label">Locations</span>
+                </div>
+                <div class="stat-badge">
+                  <span class="stat-number">{{ totalViolationsCount }}</span>
+                  <span class="stat-label">Violations</span>
+                </div>
+              </div>
             </div>
           </header>
           
-          <!-- Heatmap Statistics Summary -->
-          <div v-if="locationHeatmap && locationHeatmap.length > 0" class="heatmap-stats-summary">
-            <div class="stat-box">
-              <div class="stat-icon">
-                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ locationHeatmap.length }}</div>
-                <div class="stat-label">Locations</div>
-              </div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-icon">
-                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ totalViolationsCount }}</div>
-                <div class="stat-label">Total Violations</div>
-              </div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-icon">
-                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <circle cx="12" cy="12" r="6"></circle>
-                  <circle cx="12" cy="12" r="2"></circle>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ hottestLocation?.location || 'N/A' }}</div>
-                <div class="stat-label">Hotspot Area</div>
-              </div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-icon">
-                <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23"></line>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">₱{{ totalFinesAmount.toLocaleString() }}</div>
-                <div class="stat-label">Total Fines</div>
-              </div>
-            </div>
-          </div>
-          
           <div v-if="!locationHeatmap || locationHeatmap.length === 0" class="empty-state">
-            <svg width="40" height="40" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
-            <p>No location data available</p>
+            </div>
+            <h4>No Location Data</h4>
+            <p>No violation location data is currently available. Check back later for updates.</p>
           </div>
           
           <div v-else class="heatmap-container">
-            <div class="map-container">
+            <div class="map-wrapper">
               <div id="violation-map" class="violation-map"></div>
             </div>
             
-            <!-- Heatmap Legend -->
-            <div class="heatmap-legend">
-              <div class="legend-section">
-                <div class="legend-title">Violation Intensity (Color)</div>
-                <div class="legend-items">
-                  <div class="legend-item">
-                    <div class="legend-pin intensity-low"></div>
+            <!-- Modern Legend -->
+            <div class="legend-panel">
+              <div class="legend-header">
+                <h4>Legend</h4>
+                <div class="legend-mode">{{ visualizationMode.charAt(0).toUpperCase() + visualizationMode.slice(1) }} View</div>
+              </div>
+              
+              <div class="legend-content">
+              <!-- Heatmap Mode Legend -->
+              <div v-if="visualizationMode === 'heatmap'" class="legend-section">
+                <div class="legend-title">Violation Intensity</div>
+                  <div class="intensity-scale">
+                    <div class="scale-bar">
+                      <div class="scale-gradient"></div>
+                    </div>
+                    <div class="scale-labels">
+                      <span>Low</span>
+                      <span>Medium</span>
+                      <span>High</span>
+                      <span>Critical</span>
+                    </div>
+                    <div class="scale-values">
+                      <span>1-20</span>
+                      <span>21-50</span>
+                      <span>51-100</span>
+                      <span>100+</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Marker Mode Legend -->
+              <div v-else-if="visualizationMode === 'markers'" class="legend-section">
+                  <div class="legend-title">Violation Intensity</div>
+                  <div class="marker-legend">
+                    <div class="legend-row">
+                      <div class="marker-sample intensity-low"></div>
                     <span>Low (1-20)</span>
                   </div>
-                  <div class="legend-item">
-                    <div class="legend-pin intensity-medium"></div>
+                    <div class="legend-row">
+                      <div class="marker-sample intensity-medium"></div>
                     <span>Medium (21-50)</span>
                   </div>
-                  <div class="legend-item">
-                    <div class="legend-pin intensity-high"></div>
+                    <div class="legend-row">
+                      <div class="marker-sample intensity-high"></div>
                     <span>High (51-100)</span>
                   </div>
-                  <div class="legend-item">
-                    <div class="legend-pin intensity-very-high"></div>
+                    <div class="legend-row">
+                      <div class="marker-sample intensity-critical"></div>
                     <span>Critical (100+)</span>
                   </div>
                 </div>
               </div>
               
-              <div class="legend-section">
-                <div class="legend-title">Circle Size (Count)</div>
-                <div class="legend-items size-legend">
-                  <div class="legend-item">
-                    <div class="size-circle size-small"></div>
-                    <span>1-5</span>
+              <!-- Cluster Mode Legend -->
+              <div v-else class="legend-section">
+                  <div class="legend-title">Cluster Sizes</div>
+                  <div class="cluster-legend">
+                    <div class="legend-row">
+                      <div class="cluster-sample cluster-small">5</div>
+                      <span>Small (2-10)</span>
                   </div>
-                  <div class="legend-item">
-                    <div class="size-circle size-medium-small"></div>
-                    <span>6-10</span>
+                    <div class="legend-row">
+                      <div class="cluster-sample cluster-medium">25</div>
+                      <span>Medium (11-50)</span>
                   </div>
-                  <div class="legend-item">
-                    <div class="size-circle size-medium"></div>
-                    <span>11-20</span>
-                  </div>
-                  <div class="legend-item">
-                    <div class="size-circle size-medium-large"></div>
-                    <span>21-50</span>
-                  </div>
-                  <div class="legend-item">
-                    <div class="size-circle size-large"></div>
-                    <span>51-100</span>
-                  </div>
-                  <div class="legend-item">
-                    <div class="size-circle size-extra-large"></div>
-                    <span>100+</span>
+                    <div class="legend-row">
+                      <div class="cluster-sample cluster-large">75</div>
+                      <span>Large (50+)</span>
                   </div>
                 </div>
+                  <p class="legend-note">Click clusters to zoom and explore</p>
               </div>
-              
+            </div>
+          </div>
+          
+            <!-- Fullscreen Button at Bottom -->
+          <div class="heatmap-footer">
+            <button 
+              @click="openFullscreenMap" 
+              class="fullscreen-btn"
+              title="Open Fullscreen Map"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+              </svg>
+                <span>Fullscreen</span>
+            </button>
             </div>
           </div>
         </section>
@@ -677,6 +682,51 @@
       </div>
     </div>
   </SidebarLayout>
+
+  <!-- Fullscreen Map Modal -->
+  <div v-if="showFullscreenMap" class="fullscreen-modal" @click="closeFullscreenMap">
+    <div class="fullscreen-modal-content" @click.stop>
+      <div class="fullscreen-header">
+        <h3>Violation Heatmap - Fullscreen View</h3>
+        <div class="fullscreen-controls">
+          <div class="visualization-toggle">
+            <button 
+              @click="fullscreenVisualizationMode = 'markers'" 
+              :class="['viz-btn', { active: fullscreenVisualizationMode === 'markers' }]"
+              title="Marker View"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              Markers
+            </button>
+            <button 
+              @click="fullscreenVisualizationMode = 'clusters'" 
+              :class="['viz-btn', { active: fullscreenVisualizationMode === 'clusters' }]"
+              title="Cluster View"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <circle cx="6" cy="6" r="2"></circle>
+                <circle cx="18" cy="6" r="2"></circle>
+                <circle cx="6" cy="18" r="2"></circle>
+                <circle cx="18" cy="18" r="2"></circle>
+              </svg>
+              Clusters
+            </button>
+          </div>
+          <button @click="closeFullscreenMap" class="close-btn" title="Close Fullscreen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="fullscreen-violation-map" class="fullscreen-map-container"></div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -685,6 +735,10 @@ import SidebarLayout from '@/components/SidebarLayout.vue'
 import { adminAPI } from '@/services/api'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+// Import marker cluster plugin
+import 'leaflet.markercluster'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 
 export default {
   name: 'AdminDashboard',
@@ -706,6 +760,23 @@ export default {
     const isLocationPickerActive = ref(false)
     const tempLocationMarker = ref(null)
     
+    // Visualization mode state
+    const visualizationMode = ref('markers') // 'markers', 'clusters'
+    let markerLayer = null
+    let clusterLayer = null
+    
+    // Fullscreen modal state
+    const showFullscreenMap = ref(false)
+    const fullscreenVisualizationMode = ref('markers')
+    let fullscreenMap = null
+    let fullscreenMarkerLayer = null
+    let fullscreenClusterLayer = null
+    
+    // Map style tracking
+    const currentMapStyle = ref('streets')
+    let mapStyles = null
+    let fullscreenMapStyles = null
+    
     // Filter states
     const selectedPeriod = ref('month')
     const selectedChartPeriod = ref('monthly')
@@ -723,7 +794,8 @@ export default {
       { label: 'All Time', value: 'all' },
       { label: 'This Year', value: 'year' },
       { label: 'This Month', value: 'month' },
-      { label: 'This Week', value: 'week' }
+      { label: 'This Week', value: 'week' },
+      { label: 'Today', value: 'today' }
     ]
     
     const chartPeriods = [
@@ -956,6 +1028,18 @@ export default {
           console.log('🔍 DEBUG: First violator data:', unsettledViolators.value[0])
           console.log('Location heatmap:', locationHeatmap.value)
           console.log('Debug info:', debugInfo.value)
+          
+          // Debug: Log each location item
+          if (locationHeatmap.value && locationHeatmap.value.length > 0) {
+            console.log('🔍 Location heatmap details:')
+            locationHeatmap.value.forEach((location, index) => {
+              console.log(`Location ${index + 1}:`, {
+                name: location.location,
+                coordinates: `${location.gps_latitude}, ${location.gps_longitude}`,
+                count: location.count
+              })
+            })
+          }
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
@@ -1002,6 +1086,8 @@ export default {
         return `${daysPending} days delay`
       } else if (daysPending > 0) {
         return `${daysPending} day${daysPending > 1 ? 's' : ''} delay`
+      } else if (daysPending === 0) {
+        return 'Today'
       } else {
         return `Apprehended: ${apprehensionDate || 'N/A'}`
       }
@@ -1038,11 +1124,11 @@ export default {
     }
 
     const getHeatmapIntensity = (count) => {
-      if (count >= 1 && count <= 20) return 'low' // Green
-      if (count >= 21 && count <= 50) return 'medium' // Orange  
-      if (count >= 51 && count <= 100) return 'high' // Red
-      if (count > 100) return 'very-high' // Dark red
-      return 'none'
+      if (count >= 1 && count <= 20) return { label: 'Low', color: '#22c55e' } // Green
+      if (count >= 21 && count <= 50) return { label: 'Medium', color: '#f97316' } // Orange  
+      if (count >= 51 && count <= 100) return { label: 'High', color: '#ef4444' } // Red
+      if (count > 100) return { label: 'Critical', color: '#a855f7' } // Purple
+      return { label: 'None', color: '#6b7280' } // Gray
     }
 
     const getBarColorClass = (count) => {
@@ -1062,62 +1148,167 @@ export default {
         const mapElement = document.getElementById('violation-map')
         if (!mapElement || map) return
 
-        // Initialize map centered on Echague, Isabela
-        map = L.map('violation-map').setView([16.7058, 121.6670], 15)
+        // Initialize map centered on Echague, Isabela with smooth zoom
+        map = L.map('violation-map', {
+          center: [16.7058, 121.6670],
+          zoom: 14,
+          zoomControl: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true,
+          dragging: true,
+          animate: true,
+          zoomAnimation: true,
+          markerZoomAnimation: true,
+          fadeAnimation: true
+        })
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
+        // Add multiple map style options - Dark theme with satellite hybrid
+        mapStyles = {
+          streets: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+            attribution: '© Mapbox © OpenStreetMap',
+            maxZoom: 20,
+            tileSize: 512,
+            zoomOffset: -1
+          }),
+          satellite: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+            attribution: '© Mapbox',
+            maxZoom: 20,
+            tileSize: 512,
+            zoomOffset: -1
+          }),
+          dark: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+            attribution: '© Mapbox',
+            maxZoom: 20,
+            tileSize: 512,
+            zoomOffset: -1
+          }),
+          outdoors: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+            attribution: '© Mapbox',
+            maxZoom: 20,
+            tileSize: 512,
+            zoomOffset: -1
+          })
+        }
+
+        // Add default layer (streets for better marker visibility)
+        mapStyles.streets.addTo(map)
+
+        // Add layer control for switching between styles
+        L.control.layers({
+          'Satellite': mapStyles.satellite,
+          'Streets': mapStyles.streets,
+          'Dark Mode': mapStyles.dark,
+          'Outdoors': mapStyles.outdoors
+        }, {}, {
+          position: 'topright',
+          collapsed: false
+        }).addTo(map)
+        
+        // Track map style changes
+        map.on('baselayerchange', (e) => {
+          const styleName = Object.keys(mapStyles).find(key => mapStyles[key] === e.layer)
+          if (styleName) {
+            currentMapStyle.value = styleName
+            syncFullscreenMapStyle()
+          }
+        })
+
+        // Add scale control
+        L.control.scale({
+          position: 'bottomleft',
+          imperial: false,
+          metric: true
         }).addTo(map)
 
-        // Add markers for each location
+        // Add custom zoom controls with better styling
+        map.zoomControl.setPosition('topright')
+
+        // Initialize all visualization layers
         if (locationHeatmap.value && locationHeatmap.value.length > 0) {
-          addMapMarkers()
+          console.log('Initializing layers after map is ready')
+          initializeAllLayers()
+          updateVisualization()
+          
+          // Auto-fit bounds to show all markers
+          if (locationHeatmap.value.length > 1) {
+            const bounds = L.latLngBounds(
+              locationHeatmap.value
+                .filter(loc => loc.gps_latitude && loc.gps_longitude)
+                .map(loc => [parseFloat(loc.gps_latitude), parseFloat(loc.gps_longitude)])
+            )
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
+          }
+        } else {
+          console.log('No heatmap data available for initialization')
+        }
+
+        // Add current location marker (optional)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const userLocation = [position.coords.latitude, position.coords.longitude]
+            L.marker(userLocation, {
+              icon: L.divIcon({
+                className: 'user-location-marker',
+                html: `
+                  <div class="user-location-pulse">
+                    <div class="user-location-dot"></div>
+                  </div>
+                `,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+              })
+            }).addTo(map)
+              .bindPopup('<strong>Your Location</strong>')
+          })
         }
       })
     }
 
-    const addMapMarkers = () => {
-      if (!map || !locationHeatmap.value) return
+    // Initialize all visualization layers (markers, clusters)
+    const initializeAllLayers = () => {
+      if (!map || !locationHeatmap.value) {
+        console.log('Cannot initialize layers:', { hasMap: !!map, hasData: !!locationHeatmap.value })
+        return
+      }
 
-      locationHeatmap.value.forEach(location => {
-        // Use GPS coordinates from database if available, otherwise fallback to random coordinates
-        const coords = location.gps_latitude && location.gps_longitude 
-          ? [parseFloat(location.gps_latitude), parseFloat(location.gps_longitude)]
-          : [
-              14.5995 + (Math.random() - 0.5) * 0.1,
-              120.9842 + (Math.random() - 0.5) * 0.1
-            ]
+      console.log('Initializing layers with data:', locationHeatmap.value)
 
+      // Prepare data for all visualizations
+      const validLocations = locationHeatmap.value.filter(
+        loc => loc.gps_latitude && loc.gps_longitude
+      )
+
+      console.log('Valid locations:', validLocations)
+
+      if (validLocations.length === 0) {
+        console.log('No valid locations found')
+        return
+      }
+
+      // 1. Initialize Marker Layer (regular markers)
+      markerLayer = L.layerGroup()
+      
+      validLocations.forEach(location => {
+        const coords = [
+          parseFloat(location.gps_latitude),
+          parseFloat(location.gps_longitude)
+        ]
+        
         const intensity = getHeatmapIntensity(location.count)
         
-        // Dynamic circle size based on violation count
-        let radius = 5 // Base size
-        if (location.count >= 1 && location.count <= 5) {
-          radius = 8
-        } else if (location.count >= 6 && location.count <= 10) {
-          radius = 12
-        } else if (location.count >= 11 && location.count <= 20) {
-          radius = 16
-        } else if (location.count >= 21 && location.count <= 50) {
-          radius = 22
-        } else if (location.count >= 51 && location.count <= 100) {
-          radius = 28
-        } else if (location.count > 100) {
-          radius = 35
-        }
+        // Dynamic circle size based on violation count - redesigned scale
+        let radius = 6
+        if (location.count >= 2 && location.count <= 5) radius = 10
+        else if (location.count >= 6 && location.count <= 10) radius = 14
+        else if (location.count >= 11 && location.count <= 20) radius = 18
+        else if (location.count >= 21 && location.count <= 50) radius = 24
+        else if (location.count >= 51 && location.count <= 100) radius = 30
+        else if (location.count > 100) radius = 36
         
         // Dynamic color based on intensity
-        let color = '#22c55e' // Green (low)
-        if (intensity === 'medium') {
-          color = '#f97316' // Orange
-        } else if (intensity === 'high') {
-          color = '#ef4444' // Red
-        } else if (intensity === 'very-high') {
-          color = '#a855f7' // Purple
-        }
+        const color = intensity.color
 
-        // Create circle marker with pulsing animation
+        // Create circle marker
         const marker = L.circleMarker(coords, {
           radius: radius,
           fillColor: color,
@@ -1126,24 +1317,14 @@ export default {
           opacity: 1,
           fillOpacity: 0.8,
           className: 'pulsing-marker'
-        }).addTo(map)
-        
+        })
 
-        // Add location name label above the marker
-        L.marker(coords, {
-          icon: L.divIcon({
-            className: 'location-label',
-            html: `<div class="location-name-label">${location.location}</div>`,
-            iconSize: [120, 30],
-            iconAnchor: [60, 30]
-          })
-        }).addTo(map)
-
+        // Create popup (location name only shown when clicked)
         marker.bindPopup(`
           <div class="map-popup">
             <div class="popup-header">
               <h4>${location.location}</h4>
-              <span class="intensity-badge intensity-${intensity}">${intensity.charAt(0).toUpperCase() + intensity.slice(1)}</span>
+              <span class="intensity-badge intensity-${intensity.label.toLowerCase()}">${intensity.label}</span>
             </div>
             <div class="popup-stats">
               <div class="stat-row">
@@ -1168,8 +1349,94 @@ export default {
             }
           </div>
         `)
+
+        markerLayer.addLayer(marker)
+      })
+
+      // 2. Initialize Cluster Layer
+      clusterLayer = L.markerClusterGroup({
+        maxClusterRadius: 80,  // Increased radius for better clustering
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: true,  // Enable coverage on hover
+        zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 16,  // Disable clustering at high zoom levels
+        spiderfyDistanceMultiplier: 1.5
+      })
+
+      validLocations.forEach(location => {
+        const coords = [
+          parseFloat(location.gps_latitude),
+          parseFloat(location.gps_longitude)
+        ]
+        
+        const intensity = getHeatmapIntensity(location.count)
+        const color = intensity.color
+
+        const marker = L.circleMarker(coords, {
+          radius: 10,
+          fillColor: color,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        })
+
+        marker.bindPopup(`
+          <div class="map-popup">
+            <div class="popup-header">
+              <h4>${location.location}</h4>
+              <span class="intensity-badge intensity-${intensity.label.toLowerCase()}">${intensity.label}</span>
+            </div>
+            <div class="popup-stats">
+              <div class="stat-row">
+                <span class="stat-label">Violations:</span>
+                <span class="stat-value">${location.count}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Total Amount:</span>
+                <span class="stat-value">₱${location.total_amount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        `)
+
+        clusterLayer.addLayer(marker)
       })
     }
+
+    // Update visualization based on selected mode
+    const updateVisualization = () => {
+      if (!map) {
+        console.log('No map available for visualization update')
+        return
+      }
+
+      console.log('Updating visualization, mode:', visualizationMode.value)
+      console.log('Available layers:', {
+        markerLayer: !!markerLayer,
+        clusterLayer: !!clusterLayer
+      })
+
+      // Remove all layers
+      if (markerLayer) map.removeLayer(markerLayer)
+      if (clusterLayer) map.removeLayer(clusterLayer)
+
+      // Add the selected layer
+      if (visualizationMode.value === 'markers' && markerLayer) {
+        console.log('Adding marker layer to map')
+        map.addLayer(markerLayer)
+      } else if (visualizationMode.value === 'clusters' && clusterLayer) {
+        console.log('Adding cluster layer to map')
+        map.addLayer(clusterLayer)
+      } else {
+        console.log('No layer to add for mode:', visualizationMode.value)
+      }
+    }
+
+    // Watch for visualization mode changes
+    watch(visualizationMode, () => {
+      updateVisualization()
+    })
 
     const updateMap = () => {
       if (map) {
@@ -1177,6 +1444,263 @@ export default {
         map = null
       }
       initializeMap()
+    }
+
+    // Fullscreen map functions
+    const openFullscreenMap = () => {
+      console.log('Opening fullscreen map...')
+      console.log('Current locationHeatmap data:', locationHeatmap.value)
+      console.log('Data length:', locationHeatmap.value?.length)
+      
+      if (!locationHeatmap.value || locationHeatmap.value.length === 0) {
+        console.log('No heatmap data available, cannot open fullscreen')
+        return
+      }
+      
+      showFullscreenMap.value = true
+      fullscreenVisualizationMode.value = visualizationMode.value
+      nextTick(() => {
+        console.log('NextTick - initializing fullscreen map')
+        // Add a small delay to ensure DOM is fully rendered
+        setTimeout(() => {
+        initializeFullscreenMap()
+        }, 100)
+      })
+    }
+
+    const closeFullscreenMap = () => {
+      showFullscreenMap.value = false
+      if (fullscreenMap) {
+        fullscreenMap.remove()
+        fullscreenMap = null
+        fullscreenMarkerLayer = null
+        fullscreenClusterLayer = null
+      }
+    }
+
+    const initializeFullscreenMap = () => {
+      const mapElement = document.getElementById('fullscreen-violation-map')
+      console.log('Fullscreen map element:', mapElement)
+      if (!mapElement || fullscreenMap) {
+        console.log('Map element not found or map already exists')
+        return
+      }
+
+      console.log('Initializing fullscreen map...')
+      console.log('Location heatmap data:', locationHeatmap.value)
+      console.log('Data length:', locationHeatmap.value?.length)
+      // Initialize fullscreen map
+      fullscreenMap = L.map('fullscreen-violation-map', {
+        center: [16.7058, 121.6670],
+        zoom: 14,
+        zoomControl: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        dragging: true,
+        animate: true,
+        zoomAnimation: true,
+        markerZoomAnimation: true,
+        fadeAnimation: true
+      })
+      
+      console.log('Fullscreen map created:', fullscreenMap)
+
+      // Add map styles
+      fullscreenMapStyles = {
+        streets: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+          attribution: '© Mapbox © OpenStreetMap',
+          maxZoom: 20,
+          tileSize: 512,
+          zoomOffset: -1
+        }),
+        satellite: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+          attribution: '© Mapbox',
+          maxZoom: 20,
+          tileSize: 512,
+          zoomOffset: -1
+        }),
+        dark: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+          attribution: '© Mapbox',
+          maxZoom: 20,
+          tileSize: 512,
+          zoomOffset: -1
+        }),
+        outdoors: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXVqb2hucmF5IiwiYSI6ImNtaDczcG94MDBubGgybHNieml0ZmJ6bmwifQ.KRR3neB3mYayV6L8sN71uA', {
+          attribution: '© Mapbox',
+          maxZoom: 20,
+          tileSize: 512,
+          zoomOffset: -1
+        })
+      }
+
+      // Add default layer using current style
+      fullscreenMapStyles[currentMapStyle.value].addTo(fullscreenMap)
+
+      // Add layer control
+      L.control.layers({
+        'Satellite': fullscreenMapStyles.satellite,
+        'Streets': fullscreenMapStyles.streets,
+        'Dark Mode': fullscreenMapStyles.dark,
+        'Outdoors': fullscreenMapStyles.outdoors
+      }, {}, {
+        position: 'topright',
+        collapsed: false
+      }).addTo(fullscreenMap)
+
+      // Add scale control
+      L.control.scale({
+        position: 'bottomleft',
+        imperial: false,
+        metric: true
+      }).addTo(fullscreenMap)
+
+      // Initialize fullscreen visualization layers
+      if (locationHeatmap.value && locationHeatmap.value.length > 0) {
+        console.log('Initializing fullscreen layers with data:', locationHeatmap.value.length, 'locations')
+        initializeFullscreenLayers()
+        updateFullscreenVisualization()
+        
+        // Auto-fit bounds
+        if (locationHeatmap.value.length > 1) {
+          const bounds = L.latLngBounds(
+            locationHeatmap.value
+              .filter(loc => loc.gps_latitude && loc.gps_longitude)
+              .map(loc => [parseFloat(loc.gps_latitude), parseFloat(loc.gps_longitude)])
+          )
+          fullscreenMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
+        }
+      }
+    }
+
+    const initializeFullscreenLayers = () => {
+      if (!fullscreenMap || !locationHeatmap.value || locationHeatmap.value.length === 0) {
+        console.log('Cannot initialize fullscreen layers:', {
+          hasMap: !!fullscreenMap,
+          hasData: !!locationHeatmap.value,
+          dataLength: locationHeatmap.value?.length
+        })
+        return
+      }
+
+      console.log('Initializing fullscreen layers with', locationHeatmap.value.length, 'locations')
+
+      // Clear existing layers
+      if (fullscreenMarkerLayer) fullscreenMap.removeLayer(fullscreenMarkerLayer)
+      if (fullscreenClusterLayer) fullscreenMap.removeLayer(fullscreenClusterLayer)
+
+      const validLocations = locationHeatmap.value.filter(loc => loc.gps_latitude && loc.gps_longitude)
+
+      // Create marker layer
+      const markers = validLocations.map(loc => {
+          const intensity = getHeatmapIntensity(loc.count)
+          // Dynamic circle size based on violation count - redesigned scale
+          let radius = 6
+          if (loc.count >= 2 && loc.count <= 5) radius = 10
+          else if (loc.count >= 6 && loc.count <= 10) radius = 14
+          else if (loc.count >= 11 && loc.count <= 20) radius = 18
+          else if (loc.count >= 21 && loc.count <= 50) radius = 24
+          else if (loc.count >= 51 && loc.count <= 100) radius = 30
+          else if (loc.count > 100) radius = 36
+          
+          const marker = L.circleMarker([parseFloat(loc.gps_latitude), parseFloat(loc.gps_longitude)], {
+            radius: radius,
+            fillColor: intensity.color,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 0.8,
+            fillOpacity: 0.7
+          })
+
+          marker.bindPopup(`
+            <div class="marker-popup">
+              <h4>${loc.location || 'Unknown Location'}</h4>
+              <p><strong>Violations:</strong> ${loc.count || 0}</p>
+              <p><strong>Fines:</strong> ₱${(loc.total_amount || 0).toLocaleString()}</p>
+              <p><strong>Intensity:</strong> ${intensity.label}</p>
+            </div>
+          `)
+
+          return marker
+        })
+
+      fullscreenMarkerLayer = L.layerGroup(markers)
+      console.log('Created fullscreen marker layer with', markers.length, 'markers')
+
+      // Create cluster layer using the same markers
+      fullscreenClusterLayer = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 80,  // Increased radius for better clustering
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: true,  // Enable coverage on hover
+        zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 16,  // Disable clustering at high zoom levels
+        spiderfyDistanceMultiplier: 1.5
+      })
+      console.log('Created fullscreen cluster layer:', fullscreenClusterLayer)
+      console.log('Adding', markers.length, 'markers to cluster layer')
+
+      // Add the same markers to cluster layer
+      markers.forEach((marker, index) => {
+        fullscreenClusterLayer.addLayer(marker)
+        console.log(`Added marker ${index + 1} to cluster layer`)
+      })
+      
+      console.log('Cluster layer marker count:', fullscreenClusterLayer.getLayers().length)
+      
+      // Force cluster layer to refresh
+      setTimeout(() => {
+        console.log('Refreshing cluster layer...')
+        fullscreenClusterLayer.refreshClusters()
+        console.log('Cluster layer refreshed')
+      }, 100)
+    }
+
+    const updateFullscreenVisualization = () => {
+      if (!fullscreenMap) {
+        console.log('No fullscreen map available')
+        return
+      }
+
+      console.log('Updating fullscreen visualization, mode:', fullscreenVisualizationMode.value)
+      console.log('Available layers:', {
+        markerLayer: !!fullscreenMarkerLayer,
+        clusterLayer: !!fullscreenClusterLayer
+      })
+
+      // Remove all layers
+      if (fullscreenMarkerLayer) fullscreenMap.removeLayer(fullscreenMarkerLayer)
+      if (fullscreenClusterLayer) fullscreenMap.removeLayer(fullscreenClusterLayer)
+
+      // Add the selected layer
+      if (fullscreenVisualizationMode.value === 'markers' && fullscreenMarkerLayer) {
+        console.log('Adding marker layer to fullscreen map')
+        fullscreenMap.addLayer(fullscreenMarkerLayer)
+      } else if (fullscreenVisualizationMode.value === 'clusters' && fullscreenClusterLayer) {
+        console.log('Adding cluster layer to fullscreen map')
+        fullscreenMap.addLayer(fullscreenClusterLayer)
+      } else {
+        console.log('No layer to add for mode:', fullscreenVisualizationMode.value)
+      }
+    }
+
+    // Watch for fullscreen visualization mode changes
+    watch(fullscreenVisualizationMode, () => {
+      updateFullscreenVisualization()
+    })
+
+    // Sync fullscreen map style with main map
+    const syncFullscreenMapStyle = () => {
+      if (fullscreenMap && fullscreenMapStyles) {
+        // Remove current layer
+        fullscreenMap.eachLayer((layer) => {
+          if (layer instanceof L.TileLayer) {
+            fullscreenMap.removeLayer(layer)
+          }
+        })
+        
+        // Add new layer
+        fullscreenMapStyles[currentMapStyle.value].addTo(fullscreenMap)
+      }
     }
 
     
@@ -1415,6 +1939,12 @@ export default {
       totalFinesAmount,
       hottestLocation,
       debugInfo,
+      visualizationMode,
+      showFullscreenMap,
+      fullscreenVisualizationMode,
+      openFullscreenMap,
+      closeFullscreenMap,
+      syncFullscreenMapStyle,
       getDelayText,
       getDelayClass,
       currentPage,
@@ -2805,6 +3335,9 @@ export default {
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  min-height: 800px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Removed border-left colors from unsettled-card and heatmap-card */
@@ -2872,7 +3405,7 @@ export default {
 /* Violator and Location Lists */
 .violators-list {
   padding: 24px 32px 32px 32px;
-  max-height: 500px;
+  max-height: 700px;
   overflow-y: auto;
 }
 
@@ -3001,25 +3534,29 @@ export default {
   background: linear-gradient(90deg, #6b7280, #9ca3af);
 }
 
-/* Heatmap Styles */
+/* Modern Heatmap Styles */
 .heatmap-container {
-  padding: 24px 32px 32px 32px;
-  max-height: 500px;
-  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.map-container {
-  height: 350px;
-  margin-bottom: 20px;
-  border-radius: 8px;
+.map-wrapper {
+  position: relative;
+  height: 400px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  margin: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .violation-map {
   height: 100%;
   width: 100%;
+  border-radius: 12px;
 }
+
 
 .map-popup {
   font-family: inherit;
@@ -3038,56 +3575,363 @@ export default {
   color: #6b7280;
 }
 
-.heatmap-legend {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 16px;
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+/* View Toggle */
+.view-toggle {
   display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
+  gap: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  margin-right: -1px;
+}
+
+.view-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.view-btn:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-right: 0;
+}
+
+.view-btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.view-btn:hover {
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+.view-btn.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  z-index: 1;
+  position: relative;
+}
+
+/* Stats Badges */
+.stats-badges {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.empty-icon {
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-state h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  max-width: 300px;
+}
+
+/* Legend Panel */
+.legend-panel {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-top: 1px solid #e2e8f0;
+  padding: 20px 24px;
+}
+
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.legend-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.legend-mode {
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.legend-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .legend-section {
-  flex: 1;
-  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .legend-title {
   font-size: 0.875rem;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 12px;
+  margin: 0;
 }
 
-.legend-items {
+/* Intensity Scale */
+.intensity-scale {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
-.legend-pin {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+.scale-bar {
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.legend-pin.intensity-low {
+.scale-gradient {
+  height: 100%;
+  background: linear-gradient(to right, #22c55e 0%, #f59e0b 33%, #ef4444 66%, #a855f7 100%);
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.scale-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: -4px;
+}
+
+/* Marker Legend */
+.marker-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.marker-sample {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.marker-sample.intensity-low {
   background: #22c55e;
 }
 
-.legend-pin.intensity-medium {
+.marker-sample.intensity-medium {
   background: #f59e0b;
 }
 
-.legend-pin.intensity-high {
+.marker-sample.intensity-high {
   background: #ef4444;
+}
+
+.marker-sample.intensity-critical {
+  background: #a855f7;
+}
+
+/* Cluster Legend */
+.cluster-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cluster-sample {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cluster-sample.cluster-small {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.cluster-sample.cluster-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.cluster-sample.cluster-large {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.legend-note {
+  margin: 8px 0 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Heatmap Footer */
+.heatmap-footer {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Fullscreen Button */
+.fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.fullscreen-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.fullscreen-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Custom Cluster Markers */
+.marker-cluster-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border: 3px solid white;
+  transition: transform 0.2s ease;
+}
+
+.marker-cluster-custom:hover {
+  transform: scale(1.15);
+}
+
+.marker-cluster-custom.cluster-small {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.marker-cluster-custom.cluster-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.marker-cluster-custom.cluster-large {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.marker-cluster-custom-wrapper {
+  background: transparent !important;
+  border: none !important;
 }
 
 /* Location Pins */
@@ -3100,25 +3944,6 @@ export default {
 }
 
 
-/* Location Name Labels */
-.location-label {
-  background: transparent !important;
-  border: none !important;
-}
-
-.location-name-label {
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  margin-top: -35px;
-}
 
 /* Enhanced Map Popup Styles */
 .map-popup {
@@ -3780,5 +4605,164 @@ export default {
 .add-location-btn svg {
   width: 16px;
   height: 16px;
+}
+
+
+/* Fullscreen Modal Styles */
+.fullscreen-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.fullscreen-modal-content {
+  width: 95vw;
+  height: 95vh;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fullscreen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e7f0ff 100%);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fullscreen-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.fullscreen-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.fullscreen-controls .visualization-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.fullscreen-controls .viz-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fullscreen-controls .viz-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.fullscreen-controls .viz-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.fullscreen-controls .viz-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.fullscreen-map-container {
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 80px);
+  position: relative;
+  min-height: 400px;
+}
+
+/* Responsive adjustments for fullscreen modal */
+@media (max-width: 768px) {
+  .fullscreen-modal-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .fullscreen-header {
+    padding: 16px 20px;
+  }
+  
+  .fullscreen-header h3 {
+    font-size: 1.25rem;
+  }
+  
+  .fullscreen-controls {
+    gap: 12px;
+  }
+  
+  .fullscreen-controls .viz-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .fullscreen-controls .viz-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .close-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .close-btn svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>

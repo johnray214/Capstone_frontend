@@ -1,5 +1,5 @@
 <template>
-<SidebarLayout page-title="Violators Management">
+<SidebarLayout page-title="Violators Information">
 <ViolatorsManagement :currentUserRole="authState.user?.role">
 
 </ViolatorsManagement>

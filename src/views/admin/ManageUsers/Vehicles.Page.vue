@@ -1,5 +1,5 @@
 <template>
-<SidebarLayout page-title="Vehicles Management">
+<SidebarLayout page-title="Violators Vehicles Information">
 <VehiclesManagement :currentUserRole="authState.user?.role">
 
 </VehiclesManagement>
