@@ -30,7 +30,7 @@
           </button>
           
           <div class="back-to-login">
-            <router-link to="/login">Back to Login</router-link>
+            <router-link :to="backRoute">Back to Login</router-link>
           </div>
         </form>
         
@@ -43,7 +43,7 @@
           <p>Didn't receive the email? <a href="#" @click.prevent="resetForm">Try again</a></p>
           
           <div class="back-to-login">
-            <router-link to="/login">Back to Login</router-link>
+            <router-link :to="backRoute">Back to Login</router-link>
           </div>
         </div>
       </div>
@@ -120,7 +120,8 @@ export default {
       emailSent,
       isLoading,
       handleSubmit,
-      resetForm
+      resetForm,
+      backRoute: proxy.$route.query.from === 'officials' ? '/officials-login' : '/login'
     };
   }
 };
