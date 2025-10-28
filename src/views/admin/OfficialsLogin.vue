@@ -151,24 +151,30 @@ export default {
 
 .brand {
   text-align: center;
-  padding: 24px;
+  padding: 32px;
 }
 
 .brand .logo {
-  width: 96px;
-  height: 96px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: #0d55c8;
-  border: 3px solid white;
-  padding: 6px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-  margin-bottom: 16px;
+  border: 4px solid white;
+  padding: 8px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
 }
 
 .brand h1 {
-  margin: 0 0 4px 0;
-  font-size: 24px;
-  font-weight: 700;
+  margin: 0 0 8px 0;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.brand p {
+  font-size: 18px;
+  opacity: 0.9;
 }
 
 .right-panel {
@@ -176,62 +182,138 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 40px;
 }
 
 .login-card {
   background: white;
   width: 100%;
-  max-width: 420px;
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 60px 50px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.1);
 }
 
 .logo-header h2 {
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
   text-align: center;
+  font-size: 32px;
+  font-weight: 700;
 }
 
 .subtitle {
   color: #6b7280;
-  margin: 0 0 24px 0;
+  margin: 0 0 36px 0;
   text-align: center;
+  font-size: 18px;
 }
 
-.form-group { margin-bottom: 1.5rem; }
-.form-label { display: block; margin-bottom: 6px; color: #374151; font-weight: 500; }
-.form-input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; }
+.form-group {
+  margin-bottom: 2rem;
+}
 
-.password-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.forgot-password { font-size: 0.875rem; color: #3b82f6; text-decoration: none; }
-.password-input { position: relative; }
-.toggle-password { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; }
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
+  font-weight: 600;
+  font-size: 16px;
+}
 
-.btn-full { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; }
-.btn-primary { background: #2563eb; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+}
 
-.alert { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
-.alert-error { background: #fee2e2; color: #991b1b; }
-.alert-success { background: #dcfce7; color: #166534; }
+.password-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.forgot-password {
+  font-size: 0.95rem;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.password-input {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.btn-full {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 14px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #dcfce7;
+  color: #166534;
+}
 
 .spinner-small {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top: 2px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
 
 @media (max-width: 900px) {
   .officials-login { flex-direction: column; }
-  .left-panel { min-height: 180px; }
+  .left-panel { min-height: 200px; }
 }
 </style>
-
-
