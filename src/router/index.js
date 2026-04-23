@@ -67,6 +67,13 @@ const routes = [
         component: ResetPassword,
         meta: { requiresGuest: true },
     },
+    // Back-compat for emails that link to /login/reset-password
+    {
+        path: "/login/reset-password",
+        name: "login-reset-password",
+        component: ResetPassword,
+        meta: { requiresGuest: true },
+    },
     {
         path: "/admin",
         redirect: "/admin/dashboard",

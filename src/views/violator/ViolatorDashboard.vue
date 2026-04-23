@@ -120,7 +120,7 @@
                       <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                       <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    {{ violation.location }}
+                    {{ violation.formatted_location || violation.location }}
                   </div>
                   <div class="violation-detail">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -229,7 +229,7 @@
                 <h4>Location & Details</h4>
                 <div class="detail-item full-width">
                   <label>Location:</label>
-                  <span>{{ selectedViolation.location }}</span><br>
+                  <span>{{ selectedViolation.formatted_location || selectedViolation.location }}</span><br>
                 </div>
                 <div class="detail-item full-width">
                   <label>Description:</label>

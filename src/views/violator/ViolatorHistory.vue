@@ -186,7 +186,7 @@
                     <span class="enforcer-name">by {{ violation.apprehending_officer?.first_name }} {{ violation.apprehending_officer?.middle_name }} {{ violation.apprehending_officer?.last_name }}</span>
                   </div>
                 </td>
-                <td>{{ violation.location }}</td>
+                <td>{{ violation.formatted_location || violation.location }}</td>
                 <td class="amount-cell">₱{{ formatCurrency(violation.fine_amount) }}</td>
                 <td>
                   <span class="status-badge" :class="`status-${violation.status?.toLowerCase()}`">
@@ -228,7 +228,7 @@
             </div>
             <div class="card-row">
               <div class="label">Location</div>
-              <div class="value">{{ violation.location }}</div>
+              <div class="value">{{ violation.formatted_location || violation.location }}</div>
             </div>
             <div class="card-row amount">
               <div class="label">Amount</div>
@@ -319,7 +319,7 @@
                 <h4>Location & Details</h4>
                 <div class="detail-item full-width">
                   <label>Location:</label>
-                  <span>{{ selectedViolation.location }}</span>
+                  <span>{{ selectedViolation.formatted_location || selectedViolation.location }}</span>
                 </div><br>
                 <div class="detail-item full-width">
                   <label>Description:</label>
@@ -432,7 +432,7 @@ export default {
         const search = filters.value.search.toLowerCase()
         result = result.filter(v => 
           v.violation?.name.toLowerCase().includes(search) ||
-          v.location.toLowerCase().includes(search) ||
+          (v.formatted_location || v.location).toLowerCase().includes(search) ||
           `${v.apprehending_officer?.first_name} ${v.apprehending_officer?.middle_name} ${v.apprehending_officer?.last_name}`.toLowerCase().includes(search) ||
           v.id.toString().includes(search)
         )

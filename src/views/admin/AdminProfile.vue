@@ -382,7 +382,6 @@ export default {
       }
     })
 
-    // Computed property to check if password form is valid
     const isPasswordFormValid = computed(() => {
       return passwordData.value.current_password &&
              passwordData.value.new_password &&
@@ -469,7 +468,6 @@ export default {
 
           performanceStats.value = data.performance_stats || {}
 
-          // Update store so computed fullName reacts while preserving role and other fields
           if (profileUser) {
             const existing = state.user || {}
             const roleFromApi = data.user_type || existing.role
@@ -521,8 +519,7 @@ export default {
           formDataToSend.append('office', formData.value.office || '')
         }
         
-        // Update self via admin API using detected user type and id
-        const type = (userType.value || '').toLowerCase() // admin|deputy|head
+        const type = (userType.value || '').toLowerCase() 
         const response = await adminAPI.updateUser(type, currentUser.id, formDataToSend)
         
         if (response.data.status === 'success') {
